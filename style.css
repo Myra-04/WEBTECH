@@ -1,0 +1,494 @@
+/* --- 1. CSS VARIABLES --- */
+:root {
+    --bg-color: #fdfaf4;
+    --text-dark: #1f1d1d;
+    --text-muted: #5e5c5c;
+    --gradient-orange: linear-gradient(90deg, #ff6b6b, #ff8e53);
+    --white: #ffffff;
+    --black: #222222;
+    --mint-green: #00d2b4;
+    --pastel-yellow: #fff8cd;
+    --pastel-pink: #ffe5e5;
+    --pastel-mint: #d7f9f1;
+    --pastel-blue: #e5e9ff;
+}
+
+/* --- 2. GLOBAL RESET --- */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: var(--bg-color);
+    font-family: 'Inter', sans-serif;
+    color: var(--text-dark);
+    position: relative; 
+    overflow-x: hidden; 
+}
+
+h1, h2, h3, .logo-text {
+    font-family: 'Poppins', sans-serif;
+}
+
+/* --- 3. REUSABLE COMPONENTS (THE LEGO BRICKS) --- */
+.btn-primary {
+    background-color: var(--black);
+    color: var(--white);
+    padding: 10px 20px;
+    border-radius: 20px;
+    text-decoration: none;
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+}
+
+.btn-secondary {
+    background-color: var(--white);
+    color: var(--black);
+    padding: 10px 20px;
+    border-radius: 20px;
+    border: 1px solid #eaeaea;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.btn-large {
+    padding: 14px 28px;
+    font-size: 1.1rem;
+}
+
+/* --- 4. NAVIGATION BAR --- */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 40px;
+    background-color: var(--white);
+    margin: 20px 40px;
+    border-radius: 40px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 30px;
+    font-weight: 500;
+    font-size: 0.95rem;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--text-dark);
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.cart-btn {
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    position: relative;
+    cursor: pointer;
+}
+
+.cart-badge {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    background-color: #00d2b4; /* Mint green */
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    font-weight: bold;
+}
+
+/* --- 5. HERO SECTION --- */
+.hero {
+    text-align: center;
+    padding: 80px 20px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.badge {
+    background-color: var(--white);
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+
+    transform: rotate(-3deg); 
+    transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+    cursor: default;
+    display: inline-block; 
+}
+
+.badge:hover {
+    transform: rotate(0deg); 
+    box-shadow: 0 6px 15px rgba(0,0,0,0.08); 
+}
+
+.hero-title {
+    font-size: 4.5rem;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    margin-bottom: 20px;
+}
+
+.text-gradient {
+    background: var(--gradient-orange);
+    -webkit-background-clip: text;
+    background-clip: text; 
+    -webkit-text-fill-color: transparent;
+}
+
+.hero-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-muted);
+    max-width: 600px;
+    margin-bottom: 40px;
+    line-height: 1.6;
+}
+
+.hero-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+/* --- 6. FEATURES SECTION --- */
+.features {
+    padding: 80px 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.features-header {
+    text-align: center;
+    margin-bottom: 50px;
+}
+
+.features-header h2 {
+    font-size: 3.5rem;
+    line-height: 1.1;
+    margin-bottom: 20px;
+    letter-spacing: -1px;
+}
+
+.text-mint {
+    color: var(--mint-green);
+}
+
+.features-header p {
+    color: var(--text-muted);
+    font-size: 1.1rem;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+/* --- THE BENTO GRID --- */
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); 
+    gap: 20px;
+    grid-auto-rows: minmax(220px, auto); 
+}
+
+.feature-card {
+    border-radius: 30px;
+    padding: 30px;
+    text-decoration: none;
+    color: var(--text-dark);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    overflow: hidden; 
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+}
+
+.card-yellow { 
+    grid-column: 1 / 3; 
+    grid-row: 1 / 3;    
+    background: linear-gradient(135deg, var(--pastel-yellow), #ffec8a);
+}
+
+.card-pink { 
+    grid-column: 3 / 5; 
+    grid-row: 1 / 2;    
+    background-color: var(--pastel-pink); 
+}
+
+.card-mint { 
+    grid-column: 3 / 4; 
+    grid-row: 2 / 3;    
+    background-color: var(--pastel-mint); 
+}
+
+.card-blue { 
+    grid-column: 4 / 5; 
+    grid-row: 2 / 3;    
+    background-color: var(--pastel-blue); 
+}
+
+/* Inside the cards */
+.card-icon {
+    background-color: var(--white);
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.card-content h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.card-content p {
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    opacity: 0.8;
+}
+
+/* --- IMAGE CONTAINERS --- */
+.card-image-wrapper {
+    flex-grow: 1; 
+    width: 100%;
+    margin-bottom: 20px;
+    border-radius: 15px;
+    overflow: hidden;
+    background-color: rgba(255, 255, 255, 0.4); 
+    min-height: 120px;
+    display: flex;
+}
+
+.card-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+}
+
+/* --- 7. GLOBAL BACKGROUND DECORATIONS --- */
+.blob {
+    position: absolute;
+    border-radius: 50%;
+    z-index: -1; 
+    opacity: 0.7; 
+    filter: blur(2px);
+}
+
+/* near the top left */
+.blob-pink-1 {
+    width: 120px;
+    height: 120px;
+    background-color: #ffd6e0; 
+    top: 250px;
+    left: 15%;
+}
+
+/* near the top right */
+.blob-yellow-1 {
+    width: 90px;
+    height: 90px;
+    background-color: #ffeba1;
+    top: 120px;
+    right: 25%;
+}
+
+/* near the middle right */
+.blob-mint-1 {
+    width: 140px;
+    height: 140px;
+    background-color: #b3ffe0;
+    top: 600px;
+    right: 10%;
+}
+
+/* lower left */
+.blob-yellow-2 {
+    width: 180px;
+    height: 180px;
+    background-color: #fff8cd;
+    top: 900px;
+    left: 5%;
+}
+
+/* lower right */
+.blob-pink-2 {
+    width: 100px;
+    height: 100px;
+    background-color: #ffe5e5;
+    top: 1200px;
+    right: 20%;
+}
+
+/* --- 8. COURSE TRACKER SECTION --- */
+.course-tracker {
+    max-width: 1200px;
+    margin: 60px auto;
+    padding: 0 40px;
+}
+
+.tracker-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 30px;
+}
+
+.tracker-header h2 {
+    font-size: 2rem;
+    letter-spacing: -0.5px;
+}
+
+.see-all {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid #eaeaea;
+    padding: 8px 16px;
+    border-radius: 20px;
+    transition: 0.2s;
+}
+
+.see-all:hover {
+    background-color: var(--black);
+    color: var(--white);
+}
+
+/* --- HORIZONTAL SLIDER --- */
+.tracker-cards {
+    display: flex;
+    gap: 30px;
+    overflow-x: auto;
+    padding-bottom: 20px;
+    scrollbar-width: thin;
+    scrollbar-color: #555 #eaeaea;
+}
+
+.tracker-cards::-webkit-scrollbar {
+    height: 10px;
+}
+
+.tracker-cards::-webkit-scrollbar-track {
+    background: #eaeaea;
+    border-radius: 10px;
+}
+
+.tracker-cards::-webkit-scrollbar-thumb {
+    background-color: #555;
+    border-radius: 10px;
+}
+
+/* --- COURSE CARDS --- */
+.course-card {
+    min-width: 350px;
+    background-color: var(--white);
+    border-radius: 30px;
+    border: 3px solid;
+    display: flex;
+    flex-direction: column;
+}
+
+.border-mint { border-color: var(--pastel-mint); }
+.border-yellow { border-color: var(--pastel-yellow); }
+.border-pink { border-color: var(--pastel-pink); }
+
+.tracker-img-box {
+    margin-bottom: 0;
+    border-radius: 27px 27px 0 0;
+    height: 180px;
+    position: relative;
+}
+
+.category-tag {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background-color: var(--white);
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    z-index: 2;
+}
+
+.course-info {
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.course-info h3 {
+    font-size: 1.3rem;
+}
+
+.modules {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-top: -10px;
+}
+
+/* --- PROGRESS BARS --- */
+.progress-text-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.progress-bar-bg {
+    width: 100%;
+    height: 8px;
+    background-color: #f0f0f0;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 10px;
+}
+
+.fill-mint { background-color: var(--mint-green); }
+.fill-yellow { background-color: #ffd24c; } 
+.fill-pink { background-color: #ff9999; } 
+
+.btn-full {
+    width: 100%;
+    margin-top: 10px;
+    padding: 15px;
+}
