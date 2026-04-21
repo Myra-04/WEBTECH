@@ -172,5 +172,38 @@
         </div>
     </section>
 
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const badge = document.getElementById("semester-badge");
+            
+            // Get current date details
+            const today = new Date();
+            const month = today.getMonth(); // 0 = Jan, 1 = Feb ... 11 = Dec
+            const date = today.getDate();
+            
+            let statusText = "🌴 Semester Break! Relax and recharge.";
+
+            // 1. September Semester (Late Sept to Jan)
+            if (month >= 8 || month === 0) {
+                statusText = "🔥 September Semester is live!";
+            } 
+            // 2. February Semester (Late Feb to End of June)
+            else if (month >= 1 && month <= 5) {
+                // Checking for the exact Mid-Semester Break (April 13 - April 19)
+                if (month === 3 && date >= 13 && date <= 19) {
+                    statusText = "🌴 Mid-Semester Break! Recharge.";
+                } else {
+                    statusText = "🔥 February Semester is live!";
+                }
+            }
+            // 3. July Semester (July to August)
+            else if (month === 6 || month === 7) {
+                statusText = "☀️ July Short Semester is live!";
+            }
+
+            badge.textContent = statusText;
+        });
+    </script>
+    
 </body>
 </html>
