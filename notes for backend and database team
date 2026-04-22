@@ -1,0 +1,19 @@
+1. Navigation & Routing (Sitewide)
+Header & Footer Links: All navigation links (Spaces, Bookshelf, Chatter) and footer links (About, Help Center, Privacy, etc.) currently use placeholder href="#" attributes. The backend team needs to update these with the correct routing paths once the dynamic views are generated.
+
+Authentication State: The "My Dashboard" button currently assumes the user is logged in. The backend team needs to specify how they want to handle the UI state for logged-out users (e.g., swapping the button text to "Log In" or redirecting).
+
+2. The Bookstore Module (bookstore.html)
+Search Functionality: The search bar UI is built, but the backend team needs to wrap the .search-bar container in a <form> tag and apply the appropriate action and method="GET" attributes to process database queries for books.
+
+Add-to-Cart Logic: The current JavaScript for the "🛒" buttons is purely visual (it updates the badge number on the front-end only). The backend team must intercept these click events to actually push the specific Item ID into the user's active session cart in the database.
+
+Dynamic Cart Badge: The cart number in the top navigation bar needs to be dynamically populated on page load by fetching the user's current cart item count from the database, rather than starting at 0.
+
+3. The Course Tracker (Homepage)
+Dynamic User Content: The course cards (titles, module counts, category tags, and images) are currently hardcoded placeholders. The database team needs to write queries to populate these cards specifically with the courses the active user is enrolled in.
+
+Progress Bar Calculation: The visual fill of the progress bars relies on an inline CSS style (e.g., style="width: 40%;"). The backend team needs to calculate the user's completion percentage for each course and dynamically inject that percentage into the HTML string.
+
+4. Dynamic Semester Logic (Homepage)
+Server Time vs. Local Time: The "Semester is live!" badge currently uses the user's local browser clock via JavaScript to determine the semester and mid-semester break (based on the UTS Academic Calendar). If the university requires this to be strictly synced to a centralized server clock, the backend team needs to pass the official server date to the front-end script.

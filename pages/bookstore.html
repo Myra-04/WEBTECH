@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBuddies | Campus Shop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+
+    <div class="blob blob-pink-1"></div>
+    <div class="blob blob-yellow-1"></div>
+    <div class="blob blob-mint-1"></div>
+
+    <nav class="navbar">
+        <div class="logo">
+            <span class="logo-icon">✨</span>
+            <span class="logo-text">StudyBuddies</span>
+        </div>
+        
+        <ul class="nav-links">
+            <li><a href="#">Spaces</a></li>
+            <li><a href="bookstore.html">Bookshelf</a></li>
+            <li><a href="#">Chatter</a></li>
+        </ul>
+
+        <div class="nav-actions">
+            <button class="cart-btn" id="cart-toggle">🛍️ <span class="cart-badge" id="cart-count">0</span></button>
+            <button class="btn-primary">My Dashboard</button>
+        </div>
+    </nav>
+
+    <section class="store-container">
+        <div class="store-header">
+            <h2>Campus Shop 📚</h2>
+            <p>Textbooks, gear, and more.</p>
+            
+            <div class="search-bar">
+                <input type="text" placeholder="Search by title, author, or course code..." class="search-input">
+                <button class="btn-primary">Search</button>
+            </div>
+        </div>
+
+        <div class="book-grid">
+            
+            <div class="book-card card-mint">
+                <div class="book-image-wrapper">
+                    <img src="../images/books/biology-placeholder.jpg" alt="Essential Biology" class="book-img">
+                </div>
+                <div class="book-details">
+                    <h3 class="book-title">Essential Biology 10th Ed</h3>
+                    <div class="book-purchase-row">
+                        <span class="book-price">$85</span>
+                        <button class="add-to-cart-btn">🛒</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="book-card card-pink">
+                <div class="book-image-wrapper">
+                    <img src="../images/books/business-placeholder.jpg" alt="Modern Business" class="book-img">
+                </div>
+                <div class="book-details">
+                    <h3 class="book-title">Modern Business Principles</h3>
+                    <div class="book-purchase-row">
+                        <span class="book-price">$121</span>
+                        <button class="add-to-cart-btn">🛒</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="book-card card-yellow">
+                <div class="book-image-wrapper">
+                    <img src="../images/books/security-placeholder.jpg" alt="Application Security" class="book-img">
+                </div>
+                <div class="book-details">
+                    <h3 class="book-title">Application Security</h3>
+                    <div class="book-purchase-row">
+                        <span class="book-price">$95</span>
+                        <button class="add-to-cart-btn">🛒</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="book-card card-blue">
+                <div class="book-image-wrapper">
+                    <img src="../images/books/calculus-placeholder.jpg" alt="Advanced Calculus" class="book-img">
+                </div>
+                <div class="book-details">
+                    <h3 class="book-title">Advanced Calculus II</h3>
+                    <div class="book-purchase-row">
+                        <span class="book-price">$140</span>
+                        <button class="add-to-cart-btn">🛒</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            let cartCount = 0;
+            const badge = document.getElementById("cart-count");
+            const addToCartButtons = document.querySelectorAll(".add-to-cart-btn");
+
+            addToCartButtons.forEach(button => {
+                button.addEventListener("click", function() {
+                    cartCount++;
+                    badge.textContent = cartCount;
+                    
+                    // Simple pop animation on click
+                    this.style.transform = "scale(0.9)";
+                    setTimeout(() => {
+                        this.style.transform = "scale(1)";
+                    }, 100);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
