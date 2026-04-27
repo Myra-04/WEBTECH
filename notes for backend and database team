@@ -1,19 +1,65 @@
-1. Navigation & Routing (Sitewide)
-Header & Footer Links: All navigation links (Spaces, Bookshelf, Chatter) and footer links (About, Help Center, Privacy, etc.) currently use placeholder href="#" attributes. The backend team needs to update these with the correct routing paths once the dynamic views are generated.
+UPDATE AS OF 27/04/2026
 
-Authentication State: The "My Dashboard" button currently assumes the user is logged in. The backend team needs to specify how they want to handle the UI state for logged-out users (e.g., swapping the button text to "Log In" or redirecting).
+1. Database Architecture (Supabase)
+We are using Supabase (PostgreSQL): I want us to use Supabase instead of raw AWS. It gives us a production-ready relational database and handles the authentication out of the box, which is going to save us a massive amount of time before the May deadline.
 
-2. The Bookstore Module (bookstore.html)
-Search Functionality: The search bar UI is built, but the backend team needs to wrap the .search-bar container in a <form> tag and apply the appropriate action and method="GET" attributes to process database queries for books.
+Multi-University Support: I’ve decided to open the platform up to all universities. You need to add a university column to the users table so we know which school they belong to.
 
-Add-to-Cart Logic: The current JavaScript for the "🛒" buttons is purely visual (it updates the badge number on the front-end only). The backend team must intercept these click events to actually push the specific Item ID into the user's active session cart in the database.
+Email Validation: Since we are opening it up, make sure your registration logic accepts any valid .edu or .my student email address.
 
-Dynamic Cart Badge: The cart number in the top navigation bar needs to be dynamically populated on page load by fetching the user's current cart item count from the database, rather than starting at 0.
+2. The Bookstore Module
+Currency: I’ve set all the front-end pricing to RM (Ringgit Malaysia) to make it realistic. Make sure the database stores these correctly and your APIs pass the values to my UI in RM format.
 
-3. The Course Tracker (Homepage)
-Dynamic User Content: The course cards (titles, module counts, category tags, and images) are currently hardcoded placeholders. The database team needs to write queries to populate these cards specifically with the courses the active user is enrolled in.
+Search Function: I built the search bar UI in bookstore.html. I need you to wrap my .search-bar container in a <form> tag with a GET method so it actually queries Supabase for books by title, author, or course code.
 
-Progress Bar Calculation: The visual fill of the progress bars relies on an inline CSS style (e.g., style="width: 40%;"). The backend team needs to calculate the user's completion percentage for each course and dynamically inject that percentage into the HTML string.
+Shopping Cart Logic: Right now, my "Add to Cart" buttons just trigger a visual animation. You must intercept my front-end click events and actually push the Item ID to the logged-in user's cart in the database.
 
-4. Dynamic Semester Logic (Homepage)
-Server Time vs. Local Time: The "Semester is live!" badge currently uses the user's local browser clock via JavaScript to determine the semester and mid-semester break (based on the UTS Academic Calendar). If the university requires this to be strictly synced to a centralized server clock, the backend team needs to pass the official server date to the front-end script.
+Cart Badge: On initial page load, you need to fetch the user's current cart total from Supabase and dynamically update the badge number in my navigation bar.
+
+3. Authentication & Routing (Student Portal)
+Form Integration: I built a single-page toggle for the Login and Registration forms (student-portal.html). You need to wire my #form-login and #form-register tags up to Supabase Auth. Use the name="..." attributes I set on the inputs to extract the data.
+
+Smart Redirection: Right now, I have all the action buttons ("My Dashboard", "Explore Classes", "Resume Lecture") pointing to the login page. I need you to write an Auth Check—if a user is already logged in, clicking those buttons should bypass the portal and take them straight to the actual Dashboard.
+
+Base URLs: To fix linking issues between folders, please configure a Base URL environment variable. That way, I can just write simple absolute paths like href="/login" or href="/shop" on the front-end and you guys can handle the routing.
+
+4. Dynamic Content (Homepage)
+Course Tracker: The "Pick up where you left off" cards are currently hardcoded with placeholders. You need to query the database to inject the specific course titles, module counts, and images for whatever user is logged in.
+
+Progress Bars: I am using inline CSS to fill the progress bars (e.g., style="width: 40%;"). You need to calculate the user's completion percentage on the backend and dynamically inject that number into my HTML.
+
+Semester Status Badge: I wrote a Javascript fallback for the "Semester is live" badge, but since we are supporting multiple universities, you'll need to pass the specific university's calendar data to the front-end when the user logs in so the dates (like mid-semester breaks) are accurate.
+
+DATABASE TEAM WHAT IS NEEDED :
+
+1. Student Profiles
+We need to save who the user is and where they study.
+
+Full Name and Email.
+
+University Name (Since we're open to everyone now).
+
+2. The Bookstore Catalog
+To make the shop work, we need to store:
+
+Book Details: Title, Author, and the Course Code it belongs to.
+
+Price: Specifically in RM.
+
+Image Link: A URL to the book cover so it shows up in my cards.
+
+Stock: How many are left to sell.
+
+3. The Shopping Cart
+This is just a "linker" to remember:
+
+Who (User ID) is buying Which Book (Book ID).
+
+4. Course & Progress Tracking
+To make the "Pick up where you left off" section work:
+
+Course Info: The title and the Total Number of Modules in that course.
+
+Student Progress: Exactly how many modules that specific student has finished so far (so we can calculate the % for the progress bar).
+
+ASK ME IF GOT ANY QUESTIONS REGARDING FRONT END THANKS

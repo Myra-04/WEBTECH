@@ -11,44 +11,37 @@
 <body>
 
     <nav class="navbar">
-        <div class="logo">
+        <a href="index.html" class="logo">
             <span class="logo-icon">✨</span>
             <span class="logo-text">StudyBuddies</span>
-        </div>
+        </a>
         
         <ul class="nav-links">
             <li><a href="#">Spaces</a></li>
-            <li><a href="#">Bookshelf</a></li>
+            <li><a href="pages/bookstore.html">Bookshelf</a></li>
             <li><a href="#">Chatter</a></li>
         </ul>
 
         <div class="nav-actions">
-            <button class="cart-btn">🛍️ <span class="cart-badge">2</span></button>
-            <button class="btn-primary">My Dashboard</button>
+            <button class="cart-btn" id="cart-toggle">🛍️ <span class="cart-badge" id="cart-count">0</span></button>
+            
+            <button onclick="window.location.href='pages/student-portal.html'" class="btn-primary">My Dashboard</button>
         </div>
     </nav>
 
     <header class="hero">
-        <div class="blob blob-pink-1"></div>
-        <div class="blob blob-yellow-1"></div>
-        <div class="blob blob-mint-1"></div>
-        <div class="blob blob-yellow-2"></div>
-        <div class="blob blob-pink-2"></div>
+        
         <div id="semester-badge" class="badge">Loading status...</div>
         
-        <h1 class="hero-title">
-            A smarter way<br>
-            <span class="text-gradient">to study hard.</span>
-        </h1>
+        <h1>A smarter way<br><span class="text-pink">to study hard.</span></h1>
         
-        <p class="hero-subtitle">
-            Toss the boring portals. Connect with classmates, crush your exams, buy required books, and actually enjoy learning again.
-        </p>
-
+        <p>Toss the boring portals. Connect with classmates, crush your exams, buy required books, and actually enjoy learning again.</p>
+        
         <div class="hero-buttons">
-            <button class="btn-primary btn-large">Explore Classes 🚀</button>
+            <button onclick="window.location.href='pages/student-portal.html'" class="btn-primary btn-large">Explore Classes 🚀</button>
             <button class="btn-secondary">⭐ See what's hot</button>
         </div>
+
         <div class="hero-collage">
             <div class="float-chat">
                 <div class="chat-avatar">JT</div>
@@ -63,10 +56,11 @@
                 <img src="images/books/calculus-placeholder.jpg" alt="Calculus Book" class="float-book-img">
                 <div class="float-book-info">
                     <span class="float-book-title">Calculus 101</span>
-                    <span class="float-price-tag">$45</span>
+                    <span class="float-price-tag">RM 45</span>
                 </div>
             </div>
         </div>
+    </header>
     </header>
 
     <section class="features">
@@ -109,14 +103,14 @@
                 </div>
             </a>
 
-            <a href="pages/student-portal.html" class="feature-card card-blue">
-                <div class="card-icon">🎯</div>
+            <a href="pages/student-portal.html" class="feature-card card-pink">
+                <div class="card-icon">👥</div>
                 <div class="card-image-wrapper">
-                    <img src="images/courses/tracker-placeholder.jpg" alt="Tracker" class="card-img">
+                    <img src="images/courses/spaces-placeholder.jpg" alt="Student Spaces" class="card-img">
                 </div>
                 <div class="card-content">
-                    <h3>Tracker</h3>
-                    <p>Hit those grades.</p>
+                    <h3>Student Spaces</h3>
+                    <p>Ask questions and collaborate in real-time forums.</p>
                 </div>
             </a>
         </div>
@@ -258,22 +252,13 @@
             
             let statusText = "🌴 Semester Break! Relax and recharge.";
 
-            // 1. September Semester (Late Sept to Jan)
+            // Generic logic for all students
             if (month >= 8 || month === 0) {
-                statusText = "🔥 September Semester is live!";
-            } 
-            // 2. February Semester (Late Feb to End of June)
-            else if (month >= 1 && month <= 5) {
-                // Checking for the exact Mid-Semester Break (April 13 - April 19)
-                if (month === 3 && date >= 13 && date <= 19) {
-                    statusText = "🌴 Mid-Semester Break! Recharge.";
-                } else {
-                    statusText = "🔥 February Semester is live!";
-                }
-            }
-            // 3. July Semester (July to August)
-            else if (month === 6 || month === 7) {
-                statusText = "☀️ July Short Semester is live!";
+                statusText = "🔥 New Semester is live! Get ready.";
+            } else if (month >= 1 && month <= 5) {
+                statusText = "🔥 Semester in progress. Keep crushing it!";
+            } else {
+                statusText = "🌴 Semester Break! Relax and recharge.";
             }
 
             badge.textContent = statusText;

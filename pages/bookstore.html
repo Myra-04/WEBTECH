@@ -14,20 +14,20 @@
     <div class="blob blob-mint-1"></div>
 
     <nav class="navbar">
-        <div class="logo">
+        <a href="../index.html" class="logo">
             <span class="logo-icon">✨</span>
             <span class="logo-text">StudyBuddies</span>
-        </div>
+        </a>
         
         <ul class="nav-links">
             <li><a href="#">Spaces</a></li>
-            <li><a href="bookstore.html">Bookshelf</a></li>
+            <li><a href="bookstore.html">Bookstore</a></li>
             <li><a href="#">Chatter</a></li>
         </ul>
 
         <div class="nav-actions">
             <button class="cart-btn" id="cart-toggle">🛍️ <span class="cart-badge" id="cart-count">0</span></button>
-            <button class="btn-primary">My Dashboard</button>
+            <a href="student-portal.html" class="btn-primary">My Dashboard</a>
         </div>
     </nav>
 
@@ -51,7 +51,7 @@
                 <div class="book-details">
                     <h3 class="book-title">Essential Biology 10th Ed</h3>
                     <div class="book-purchase-row">
-                        <span class="book-price">$85</span>
+                        <span class="book-price">RM30</span>
                         <button class="add-to-cart-btn">🛒</button>
                     </div>
                 </div>
@@ -64,7 +64,7 @@
                 <div class="book-details">
                     <h3 class="book-title">Modern Business Principles</h3>
                     <div class="book-purchase-row">
-                        <span class="book-price">$121</span>
+                        <span class="book-price">RM45</span>
                         <button class="add-to-cart-btn">🛒</button>
                     </div>
                 </div>
@@ -77,7 +77,7 @@
                 <div class="book-details">
                     <h3 class="book-title">Application Security</h3>
                     <div class="book-purchase-row">
-                        <span class="book-price">$95</span>
+                        <span class="book-price">RM35</span>
                         <button class="add-to-cart-btn">🛒</button>
                     </div>
                 </div>
@@ -90,7 +90,7 @@
                 <div class="book-details">
                     <h3 class="book-title">Advanced Calculus II</h3>
                     <div class="book-purchase-row">
-                        <span class="book-price">$140</span>
+                        <span class="book-price">RM40</span>
                         <button class="add-to-cart-btn">🛒</button>
                     </div>
                 </div>
@@ -109,6 +109,9 @@
                 button.addEventListener("click", function() {
                     cartCount++;
                     badge.textContent = cartCount;
+                    
+                    // --- NEW LOGIC: Make the badge visible ---
+                    badge.style.display = "block"; 
                     
                     // Simple pop animation on click
                     this.style.transform = "scale(0.9)";
