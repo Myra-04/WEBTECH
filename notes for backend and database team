@@ -30,36 +30,54 @@ Progress Bars: I am using inline CSS to fill the progress bars (e.g., style="wid
 
 Semester Status Badge: I wrote a Javascript fallback for the "Semester is live" badge, but since we are supporting multiple universities, you'll need to pass the specific university's calendar data to the front-end when the user logs in so the dates (like mid-semester breaks) are accurate.
 
-DATABASE TEAM WHAT IS NEEDED :
+!! IMPORTANT NOTES FOR DATABASE TEAM !!
 
-1. Student Profiles
-We need to save who the user is and where they study.
+Here is the complete, combined list of everything we need on the backend and database side to make my UI actually work.
 
-Full Name and Email.
+1. General Backend & Auth Tasks
+Supabase Auth: Please wire my #form-login and #form-register tags up to Supabase Auth. Also, make sure registration accepts any valid .edu or .my student email
 
-University Name (Since we're open to everyone now).
+Smart Redirection: Right now, my action buttons ("Explore Classes", "My Dashboard") link to the login portal. You need to write an Auth Check—if a user is already logged in, clicking those buttons should bypass the portal and take them straight to their Dashboard.
 
-2. The Bookstore Catalog
-To make the shop work, we need to store:
+Base URLs: To fix linking issues between folders, please configure a Base URL environment variable so I can use simple absolute paths (like href="/login").
 
-Book Details: Title, Author, and the Course Code it belongs to.
+2. Urgent Database Fixes (For existing tables)
+I reviewed the SQL schemas you drafted, there are a few critical bugs we need to fix before we move forward:
 
-Price: Specifically in RM.
+orders table bug 1: The foreign key is on the wrong column. You have foreign KEY (id) references auth.users (id). This links the Order's ID to the User ID, meaning a user can only ever make one order in their life. The foreign key needs to be on a user_id column instead.
 
-Image Link: A URL to the book cover so it shows up in my cards.
+orders table bug 2: You have user_id set to default gen_random_uuid(). If the code fails to pass the logged-in user's ID, it will invent a ghost user. It should be null or required, but not a random generator.
 
-Stock: How many are left to sell.
+profiles table fix: I love the university and avatar_url additions! However, let's remove learning_progress. My front-end tracks progress per course, so a single integer on the profile won't work (see the user_progress table below).
 
-3. The Shopping Cart
-This is just a "linker" to remember:
+books table fix: Make sure the price column is a Decimal/Numeric type, not an Integer, so it can handle RM cents properly. Also, please add a course_code column (e.g., 'BIO101') so my front-end search bar can filter books by class.
 
-Who (User ID) is buying Which Book (Book ID).
+3. The Complete Missing Table Blueprint
+To make my specific UI designs work, here are the exact tables we need in Supabase:
 
-4. Course & Progress Tracking
-To make the "Pick up where you left off" section work:
+A. The Bookstore Module
 
-Course Info: The title and the Total Number of Modules in that course.
+cart_items: I need this for my shopping bag badge. It temporarily stores user_id, book_id, and quantity before they check out.
 
-Student Progress: Exactly how many modules that specific student has finished so far (so we can calculate the % for the progress bar).
+order_items: Once they actually buy something and it goes to your orders table, we need this table to link the Order ID to the specific Book IDs they purchased.
+
+B. The Course Tracker (Homepage)
+
+courses: You have course_materials (which is great for files), but I need a catalog table. My UI cards need title, category, image_url (thumbnail), and total_modules (e.g., 12).
+
+user_progress: This links user_id to course_id. It tracks completed_modules so the backend can calculate the math and inject the percentage into my HTML progress bars.
+
+C. The Community
+
+spaces / forum_posts: My navigation bar has links for "Spaces" and "Chatter." We need a table to store discussion threads, user_id, timestamps, and the messages.
+
+4. Dynamic Data Hooks (What you need to inject into my HTML)
+Cart Badge: On initial page load, fetch the user's current cart total from cart_items and dynamically update the badge number in my navigation bar.
+
+Search Form: Wrap my .search-bar container in bookstore.html in a <form> tag with a GET method to query the books table.
+
+Course Tracker: Query courses and user_progress to replace my placeholder cards with the user's actual recently opened courses.
+
+Semester Badge: Pass the user's specific university calendar data to the front-end when they log in so my "Semester is live!" badge dates are accurate.
 
 ASK ME IF GOT ANY QUESTIONS REGARDING FRONT END THANKS
