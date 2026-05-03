@@ -22,9 +22,16 @@ app.use(session({
 nunjucks.configure([__dirname, path.join(__dirname, 'pages')], { autoescape: true, express: app });
 app.set('view engine', 'html');
 
+
 // --- SUPABASE CONNECTION ---
-const supabaseUrl = 'https://usnhssmiytegieslaweq.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzbmhzc21peXRlZ2llc2xhd2VxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyOTk4MTIsImV4cCI6MjA5Mjg3NTgxMn0.lYt9F8k7CGAM1_FdLCoDMzrgxDMjIhioUi3NSsN6Pm0';
+
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+    console.error("🚨api key");
+}
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // --- HELPER: Get Cart Count from Database ---
@@ -214,6 +221,7 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
+
 app.get(['/pages/index.html', '/pages/pages/index.html'], (req, res) => {
     res.redirect('/');
 });
@@ -228,3 +236,4 @@ app.get(['/pages/student-portal.html', '/pages/pages/student-portal.html'], (req
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on ${process.env.BASE_URL || `http://localhost:${PORT}`}`));
+
