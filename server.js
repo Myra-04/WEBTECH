@@ -214,9 +214,9 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-app.get('/pages/index.html', (req, res) => res.redirect('/'));
-app.get('/pages/bookstore.html', (req, res) => res.redirect('/bookshelf'));
-app.get('/pages/student-portal.html', (req, res) => res.redirect('/login'));
+app.get('/pages/pages/index.html', (req, res) => res.redirect('/'));
+app.get('/pages/pages/bookstore.html', (req, res) => res.redirect('/bookshelf'));
+app.get('/pages/pages/student-portal.html', (req, res) => res.redirect('/login'));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`🚀 Server running on ${process.env.BASE_URL || `http://localhost:${PORT}`}`));
