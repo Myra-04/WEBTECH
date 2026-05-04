@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StudyBuddies | A Smarter Way to Study</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/style.css">
 </head>
 
 <body>
 
     <nav class="navbar">
-        <a href="pages/index.html" class="logo">
+        <a href="/" class="logo">
             <span class="logo-icon">✨</span>
             <span class="logo-text">StudyBuddies</span>
         </a>
@@ -23,22 +23,27 @@
         </ul>
 
         <div class="nav-actions">
-            <button class="cart-btn" id="cart-toggle">🛍️ <span class="cart-badge" id="cart-count">0</span></button>
+            <button class="cart-btn" id="cart-toggle">🛍️ <span class="cart-badge" id="cart-count">{{ cart_count | default('0') }}</span></button>
             
-            <button onclick="window.location.href='pages/student-portal.html'" class="btn-primary">My Dashboard</button>
+            {% if is_logged_in %}
+                <button onclick="window.location.href='/logout'" class="btn-secondary">Log Out</button>
+            {% else %}
+                <button onclick="window.location.href='/login'" class="btn-primary">My Dashboard</button>
+            {% endif %}
         </div>
     </nav>
 
+    {% if not is_logged_in %}
+
     <header class="hero">
-        
         <div id="semester-badge" class="badge">Loading status...</div>
         
         <h1>A smarter way<br><span class="text-pink">to study hard.</span></h1>
-        
-        <p>Toss the boring portals. Connect with classmates, crush your exams, buy required books, and actually enjoy learning again.</p>
-        
+        <br>
+        <p>Toss the boring portals.<br>Connect with classmates, crush your exams, buy required books, and actually enjoy learning again.</p>
+        <br>
         <div class="hero-buttons">
-            <button onclick="window.location.href='pages/student-portal.html'" class="btn-primary btn-large">Explore Classes 🚀</button>
+            <button onclick="window.location.href='/login'" class="btn-primary btn-large">Explore Classes 🚀</button>
             <button class="btn-secondary">⭐ See what's hot</button>
         </div>
 
@@ -49,18 +54,17 @@
             </div>
 
             <div class="main-hero-img-wrapper">
-                <img src="images/hero-students-placeholder.jpg" alt="Students studying" class="main-hero-img">
+                <img src="/static/images/hero-students-placeholder.jpg" alt="Students studying" class="main-hero-img">
             </div>
 
             <div class="float-book">
-                <img src="images/books/calculus-placeholder.jpg" alt="Calculus Book" class="float-book-img">
+                <img src="/static/images/books/calculus-placeholder.jpg" alt="Calculus Book" class="float-book-img">
                 <div class="float-book-info">
                     <span class="float-book-title">Calculus 101</span>
                     <span class="float-price-tag">RM 45</span>
                 </div>
             </div>
         </div>
-    </header>
     </header>
 
     <section class="features">
@@ -73,7 +77,7 @@
             <a href="pages/course-template.html" class="feature-card card-yellow">
                 <div class="card-icon">📖</div>
                 <div class="card-image-wrapper">
-                    <img src="images/courses/course-hub-placeholder.jpg" alt="Course Hub" class="card-img">
+                    <img src="/static/images/courses/course-hub-placeholder.jpg" alt="Course Hub" class="card-img">
                 </div>
                 <div class="card-content">
                     <h3>Course Hub</h3>
@@ -84,7 +88,7 @@
             <a href="pages/forum-template.html" class="feature-card card-pink">
                 <div class="card-icon">👥</div>
                 <div class="card-image-wrapper">
-                    <img src="images/courses/spaces-placeholder.jpg" alt="Student Spaces" class="card-img">
+                    <img src="/static/images/courses/spaces-placeholder.jpg" alt="Student Spaces" class="card-img">
                 </div>
                 <div class="card-content">
                     <h3>Student Spaces</h3>
@@ -95,7 +99,7 @@
             <a href="/bookstore" class="feature-card card-mint">
                 <div class="card-icon">🛍️</div>
                 <div class="card-image-wrapper">
-                    <img src="images/courses/bookstore-placeholder.jpg" alt="Bookstore" class="card-img">
+                    <img src="/static/images/courses/bookstore-placeholder.jpg" alt="Bookstore" class="card-img">
                 </div>
                 <div class="card-content">
                     <h3>Bookstore</h3>
@@ -103,10 +107,10 @@
                 </div>
             </a>
 
-            <a href="pages/student-portal.html" class="feature-card card-pink">
+            <a href="/login" class="feature-card card-pink">
                 <div class="card-icon">👥</div>
                 <div class="card-image-wrapper">
-                    <img src="images/courses/spaces-placeholder.jpg" alt="Student Spaces" class="card-img">
+                    <img src="/static/images/courses/spaces-placeholder.jpg" alt="Student Spaces" class="card-img">
                 </div>
                 <div class="card-content">
                     <h3>Student Spaces</h3>
@@ -116,73 +120,57 @@
         </div>
     </section>
 
-    <section class="course-tracker">
+    {% else %}
+        
+    <section class="course-tracker" id="course-tracker" style="margin-top: 60px; min-height: 60vh;">
+        
+        <div style="text-align: center; margin-bottom: 50px;">
+            <h1 style="font-size: 2.5rem; font-family: 'Poppins', sans-serif;">Welcome back to {{ university | default('Campus') }}! 🎓</h1>
+            <p style="color: var(--text-muted); font-size: 1.1rem; margin-top: 10px;">{{ semester_status }}</p>
+        </div>
+
         <div class="tracker-header">
-            <h2>Pick up where you left off ✨</h2>
-            <a href="pages/student-portal.html" class="see-all">See all classes →</a>
+            <h2>Your Enrolled Classes ✨</h2>
+            <a href="/bookstore" class="see-all">Find more books →</a>
         </div>
 
         <div class="tracker-cards">
+            {% for course in courses %}
             
-            <div class="course-card border-mint">
-                <div class="card-image-wrapper tracker-img-box">
-                    <span class="category-tag">ENGINEERING</span>
-                    <img src="images/courses/cs-placeholder.jpg" alt="Intro to Computer Science" class="card-img">
+            <div class="course-card border-{{ loop.cycle('mint', 'yellow', 'pink') }}">
+                <div class="tracker-img-box" style="background-image: url('{{ course.image_url }}'); background-size: cover; background-position: center;">
+                    <span class="category-tag">{{ course.category }}</span>
                 </div>
+                
                 <div class="course-info">
-                    <h3>Intro to Computer Science</h3>
-                    <p class="modules">12 Modules total</p>
-                    <div class="progress-text-row">
-                        <span>Progress</span>
-                        <span>40%</span>
+                    <h3>{{ course.title }}</h3>
+                    <span class="modules">{{ course.completed_modules }} / {{ course.total_modules }} Modules Completed</span>
+                    
+                    <div class="progress-container">
+                        <div class="progress-text-row">
+                            <span>Progress</span>
+                            <span>{{ course.progress_percentage }}%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-fill fill-{{ loop.cycle('mint', 'yellow', 'pink') }}" style="width: {{ course.progress_percentage }}%;"></div>
+                        </div>
                     </div>
-                    <div class="progress-bar-bg">
-                        <div class="progress-fill fill-mint" style="width: 40%;"></div>
-                    </div>
-                    <button class="btn-primary btn-full">▶ Resume Lecture</button>
+                    
+                    <button class="btn-primary btn-full" style="margin-top: 15px;">▶ Resume Lecture</button>
                 </div>
             </div>
 
-            <div class="course-card border-yellow">
-                <div class="card-image-wrapper tracker-img-box">
-                    <span class="category-tag">BUSINESS SCHOOL</span>
-                    <img src="images/courses/ethics-placeholder.jpg" alt="Modern Business Ethics" class="card-img">
-                </div>
-                <div class="course-info">
-                    <h3>Modern Business Ethics</h3>
-                    <p class="modules">8 Modules total</p>
-                    <div class="progress-text-row">
-                        <span>Progress</span>
-                        <span>10%</span>
-                    </div>
-                    <div class="progress-bar-bg">
-                        <div class="progress-fill fill-yellow" style="width: 10%;"></div>
-                    </div>
-                    <button class="btn-primary btn-full">▶ Resume Lecture</button>
-                </div>
+            {% else %}
+            <div style="padding: 40px; text-align: center; width: 100%; border: 2px dashed #eaeaea; border-radius: 20px;">
+                <h3>No courses yet! 📚</h3>
+                <p style="color: var(--text-muted); margin-bottom: 20px;">Head over to the Bookstore to grab your first module.</p>
+                <button onclick="window.location.href='/bookstore'" class="btn-primary">Go to Bookstore</button>
             </div>
-
-            <div class="course-card border-pink">
-                <div class="card-image-wrapper tracker-img-box">
-                    <span class="category-tag">SCIENCE</span>
-                    <img src="images/courses/math-placeholder.jpg" alt="Advanced Mathematics" class="card-img">
-                </div>
-                <div class="course-info">
-                    <h3>Advanced Mathematics</h3>
-                    <p class="modules">15 Modules total</p>
-                    <div class="progress-text-row">
-                        <span>Progress</span>
-                        <span>85%</span>
-                    </div>
-                    <div class="progress-bar-bg">
-                        <div class="progress-fill fill-pink" style="width: 85%;"></div>
-                    </div>
-                    <button class="btn-primary btn-full">▶ Resume Lecture</button>
-                </div>
-            </div>
-
+            {% endfor %}
         </div>
     </section>
+
+    {% endif %}
 
     <footer class="site-footer">
         <div class="footer-content">
@@ -205,7 +193,7 @@
                     <h4>Platform</h4>
                     <ul>
                         <li><a href="#">Spaces</a></li>
-                        <li><a href="#">Bookshelf</a></li>
+                        <li><a href="/bookstore">Bookshelf</a></li>
                         <li><a href="#">Chatter</a></li>
                     </ul>
                 </div>
@@ -245,23 +233,23 @@
         document.addEventListener("DOMContentLoaded", function() {
             const badge = document.getElementById("semester-badge");
             
-            // Get current date details
-            const today = new Date();
-            const month = today.getMonth(); // 0 = Jan, 1 = Feb ... 11 = Dec
-            const date = today.getDate();
-            
-            let statusText = "🌴 Semester Break! Relax and recharge.";
+            // Only run this logic if the badge exists on the page (Guest View)
+            if (badge && badge.textContent === "Loading status...") {
+                const today = new Date();
+                const month = today.getMonth(); 
+                
+                let statusText = "🌴 Semester Break! Relax and recharge.";
 
-            // Generic logic for all students
-            if (month >= 8 || month === 0) {
-                statusText = "🔥 New Semester is live! Get ready.";
-            } else if (month >= 1 && month <= 5) {
-                statusText = "🔥 Semester in progress. Keep crushing it!";
-            } else {
-                statusText = "🌴 Semester Break! Relax and recharge.";
+                if (month >= 8 || month === 0) {
+                    statusText = "🔥 New Semester is live! Get ready.";
+                } else if (month >= 1 && month <= 5) {
+                    statusText = "🔥 Semester in progress. Keep crushing it!";
+                } else {
+                    statusText = "🌴 Semester Break! Relax and recharge.";
+                }
+
+                badge.textContent = statusText;
             }
-
-            badge.textContent = statusText;
         });
     </script>
     
