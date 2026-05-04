@@ -110,8 +110,6 @@ app.get('/search', async (req, res) => {
     const { data: searchResults, error } = await supabase
         .from('books')
         .select('*')
-        // This tells Supabase: Find books where the title OR author OR course_code matches the search word.
-        // The '%${searchQuery}%' allows partial matches (e.g., typing "calc" finds "Calculus").
         .or(`title.ilike.%${searchQuery}%,author.ilike.%${searchQuery}%,course_code.ilike.%${searchQuery}%`);
         
     // 3. Check if the database threw an error
