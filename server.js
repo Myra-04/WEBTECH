@@ -24,7 +24,7 @@ app.set('view engine', 'html');
 
 // --- SUPABASE CONNECTION ---
 const supabaseUrl = 'https://usnhssmiytegieslaweq.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVzbmhzc21peXRlZ2llc2xhd2VxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzcyOTk4MTIsImV4cCI6MjA5Mjg3NTgxMn0.lYt9F8k7CGAM1_FdLCoDMzrgxDMjIhioUi3NSsN6Pm0';
+const supabaseKey = 'sb_publishable_Br9p9Kau2ObdnLnAC4Ku_w_3MAczbI5';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // --- HELPER: Get Cart Count from Database ---
@@ -77,7 +77,7 @@ app.get('/', async (req, res) => {
 });
 
 // --- BOOKSTORE (SEARCH & CURRENCY) ---
-app.get('/bookshelf', async (req, res) => {
+app.get('/bookstore', async (req, res) => {
     const { data: allBooks } = await supabase.from('books').select('*');
     res.render('bookstore', { 
         books: allBooks || [], 
@@ -87,18 +87,32 @@ app.get('/bookshelf', async (req, res) => {
 });
 
 app.get('/search', async (req, res) => {
-    const query = req.query.query || '';
+    // 1. Grab the word the user typed into the search bar
+    // (If they typed nothing, it defaults to an empty string)
+    const searchQuery = req.query.query || '';
     
-    // UPDATED: Search by Title OR Author OR Course Code
-    const { data: results } = await supabase
+    console.log("🔍 USER SEARCHED FOR:", searchQuery);
+
+    // 2. Fetch the matching books from Supabase
+    const { data: searchResults, error } = await supabase
         .from('books')
         .select('*')
-        .or(`title.ilike.%${query}%,author.ilike.%${query}%,course_code.ilike.%${query}%`);
+        // This tells Supabase: Find books where the title OR author OR course_code matches the search word.
+        // The '%${searchQuery}%' allows partial matches (e.g., typing "calc" finds "Calculus").
+        .or(`title.ilike.%${searchQuery}%,author.ilike.%${searchQuery}%,course_code.ilike.%${searchQuery}%`);
         
+    // 3. Check if the database threw an error
+    if (error) {
+        console.log("🚨 DATABASE SEARCH ERROR:", error.message);
+        // If it breaks, just send an empty array so the page doesn't crash
+        return res.render('bookstore', { books: [] }); 
+    }
+        
+    console.log(`✅ FOUND ${searchResults.length} BOOKS!`);
+
+    // 4. Send the fetched books to your HTML/EJS file to be displayed on the grid
     res.render('bookstore', { 
-        books: results || [], 
-        cart_count: await getCartCount(req.session.userId), 
-        is_logged_in: !!req.session.userId 
+        books: searchResults || []
     });
 });
 
@@ -142,8 +156,6 @@ app.post('/register', async (req, res) => {
     if (!emailRegex.test(email)) {
         return res.status(400).send("Must use a valid .edu or .my student email address.");
     }
-    
-   // ... top part stays the same
     
     // SUPABASE AUTH: Creates the user securely
     const { data, error } = await supabase.auth.signUp({

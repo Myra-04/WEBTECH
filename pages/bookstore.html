@@ -14,20 +14,20 @@
     <div class="blob blob-mint-1"></div>
 
     <nav class="navbar">
-        <a href="pages/index.html" class="logo">
+        <a href="/" class="logo">
             <span class="logo-icon">✨</span>
             <span class="logo-text">StudyBuddies</span>
         </a>
         
         <ul class="nav-links">
             <li><a href="#">Spaces</a></li>
-            <li><a href="pages/bookstore.html">Bookstore</a></li>
+           <li><a href="/bookstore">Bookstore</a></li>
             <li><a href="#">Chatter</a></li>
         </ul>
 
         <div class="nav-actions">
             <button class="cart-btn" id="cart-toggle">🛍️ <span class="cart-badge" id="cart-count">0</span></button>
-            <a href="pages/student-portal.html" class="btn-primary">My Dashboard</a>
+            <a href="/#course-tracker" class="btn-primary">My Dashboard</a>
         </div>
     </nav>
 
@@ -36,65 +36,47 @@
             <h2>Campus Shop 📚</h2>
             <p>Textbooks, gear, and more.</p>
             
-            <div class="search-bar">
-                <input type="text" placeholder="Search by title, author, or course code..." class="search-input">
-                <button class="btn-primary">Search</button>
-            </div>
+            <!-- 1. FIXED SEARCH FORM -->
+            <form action="/search" method="GET" class="search-bar">
+                <input type="text" name="query" placeholder="Search by title, author, or course code..." class="search-input" required>
+                <button type="submit" class="btn-primary">Search</button>
+            </form>
         </div>
 
         <div class="book-grid">
             
-            <div class="book-card card-mint">
-                <div class="book-image-wrapper">
-                    <img src="../images/books/biology-placeholder.jpg" alt="Essential Biology" class="book-img">
-                </div>
-                <div class="book-details">
-                    <h3 class="book-title">Essential Biology 10th Ed</h3>
-                    <div class="book-purchase-row">
-                        <span class="book-price">RM30</span>
-                        <button class="add-to-cart-btn">🛒</button>
+            <!-- 2. THE DYNAMIC DATABASE LOOP (NUNJUCKS VERSION) -->
+            {% if books and books.length > 0 %}
+                {% set colors = ['card-mint', 'card-pink', 'card-yellow', 'card-blue'] %}
+                
+                {% for book in books %}
+                    
+                    <!-- Automatically cycle through the 4 colors -->
+                    <div class="book-card {{ colors[loop.index0 % 4] }}">
+                        <div class="book-image-wrapper">
+                            <!-- Uses the image from DB, or a fallback if blank -->
+                            <img src="{{ book.image_url or '../images/books/biology-placeholder.jpg' }}" alt="{{ book.title }}" class="book-img">
+                        </div>
+                        <div class="book-details">
+                            <h3 class="book-title">{{ book.title }}</h3>
+                            <p style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">{{ book.author }} | {{ book.course_code }}</p>
+                            <div class="book-purchase-row">
+                                <span class="book-price">RM{{ book.price }}</span>
+                                <button class="add-to-cart-btn">🛒</button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
 
-            <div class="book-card card-pink">
-                <div class="book-image-wrapper">
-                    <img src="../images/books/business-placeholder.jpg" alt="Modern Business" class="book-img">
+                {% endfor %}
+                
+            {% else %}
+                <!-- What shows up if the search finds nothing -->
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                    <h3>No books found! 🕵️‍♀️</h3>
+                    <p>Try searching for a different title or author.</p>
+                    <a href="/books" class="btn-primary" style="display: inline-block; margin-top: 15px;">Clear Search</a>
                 </div>
-                <div class="book-details">
-                    <h3 class="book-title">Modern Business Principles</h3>
-                    <div class="book-purchase-row">
-                        <span class="book-price">RM45</span>
-                        <button class="add-to-cart-btn">🛒</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="book-card card-yellow">
-                <div class="book-image-wrapper">
-                    <img src="../images/books/security-placeholder.jpg" alt="Application Security" class="book-img">
-                </div>
-                <div class="book-details">
-                    <h3 class="book-title">Application Security</h3>
-                    <div class="book-purchase-row">
-                        <span class="book-price">RM35</span>
-                        <button class="add-to-cart-btn">🛒</button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="book-card card-blue">
-                <div class="book-image-wrapper">
-                    <img src="../images/books/calculus-placeholder.jpg" alt="Advanced Calculus" class="book-img">
-                </div>
-                <div class="book-details">
-                    <h3 class="book-title">Advanced Calculus II</h3>
-                    <div class="book-purchase-row">
-                        <span class="book-price">RM40</span>
-                        <button class="add-to-cart-btn">🛒</button>
-                    </div>
-                </div>
-            </div>
+            {% endif %}
 
         </div>
     </section>
@@ -110,7 +92,7 @@
                     cartCount++;
                     badge.textContent = cartCount;
                     
-                    // --- NEW LOGIC: Make the badge visible ---
+                    // Make the badge visible
                     badge.style.display = "block"; 
                     
                     // Simple pop animation on click
