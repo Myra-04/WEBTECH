@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBuddies | A Smarter Way to Study</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <nav class="navbar">
+        <a href="pages/index.html" class="logo">
+            <span class="logo-icon">✨</span>
+            <span class="logo-text">StudyBuddies</span>
+        </a>
+        
+        <ul class="nav-links">
+            <li><a href="#">Spaces</a></li>
+            <li><a href="pages/bookstore.html">Bookshelf</a></li>
+            <li><a href="#">Chatter</a></li>
+        </ul>
+
+        <div class="nav-actions">
+            <button class="cart-btn" id="cart-toggle">🛍️ <span class="cart-badge" id="cart-count">0</span></button>
+            
+            <button onclick="window.location.href='pages/student-portal.html'" class="btn-primary">My Dashboard</button>
+        </div>
+    </nav>
+
+    <header class="hero">
+        
+        <div id="semester-badge" class="badge">Loading status...</div>
+        
+        <h1>A smarter way<br><span class="text-pink">to study hard.</span></h1>
+        
+        <p>Toss the boring portals. Connect with classmates, crush your exams, buy required books, and actually enjoy learning again.</p>
+        
+        <div class="hero-buttons">
+            <button onclick="window.location.href='pages/student-portal.html'" class="btn-primary btn-large">Explore Classes 🚀</button>
+            <button class="btn-secondary">⭐ See what's hot</button>
+        </div>
+
+        <div class="hero-collage">
+            <div class="float-chat">
+                <div class="chat-avatar">JT</div>
+                <p>"Anyone have notes for Bio?"</p>
+            </div>
+
+            <div class="main-hero-img-wrapper">
+                <img src=".vscode\images\student studying.jpg" alt="Students studying" class="main-hero-img">
+            </div>
+
+            <div class="float-book">
+                <img src=".vscode\images\calculus.jpg" alt="Calculus Book" class="float-book-img">
+                <div class="float-book-info">
+                    <span class="float-book-title">Calculus 101</span>
+                    <span class="float-price-tag">RM 45</span>
+                </div>
+            </div>
+        </div>
+    </header>
+    </header>
+
+    <section class="features">
+        <div class="features-header">
+            <h2>Everything <span class="text-mint">you need.</span><br>Nothing you don't.</h2>
+            <p>Ditch the confusing multi-login mess. We combined the campus experience into a single fun platform.</p>
+        </div>
+
+        <div class="features-grid">
+            <a href="pages/course-template.html" class="feature-card card-yellow">
+                <div class="card-icon">📖</div>
+                <div class="card-image-wrapper">
+                    <img src=".vscode\images\Course.jpg" alt="Course Hub" class="card-img">
+                </div>
+                <div class="card-content">
+                    <h3>Course Hub</h3>
+                    <p>All your lectures, notes, and interactive quizzes organized perfectly.</p>
+                </div>
+            </a>
+
+            <a href="pages/forum-template.html" class="feature-card card-pink">
+                <div class="card-icon">👥</div>
+                <div class="card-image-wrapper">
+                    <img src=".vscode\images\student.jpg" alt="Student Spaces" class="card-img">
+                </div>
+                <div class="card-content">
+                    <h3>Student Spaces</h3>
+                    <p>Ask questions and collaborate in real-time forums.</p>
+                </div>
+            </a>
+
+            <a href="pages/bookstore.html" class="feature-card card-mint">
+                <div class="card-icon">🛍️</div>
+                <div class="card-image-wrapper">
+                    <img src=".vscode\images\bookstore.jpg" alt="Bookstore" class="card-img">
+                </div>
+                <div class="card-content">
+                    <h3>Bookstore</h3>
+                    <p>Buy & sell texts.</p>
+                </div>
+            </a>
+
+            <a href="pages/student-portal.html" class="feature-card card-pink">
+                <div class="card-icon">👥</div>
+                <div class="card-image-wrapper">
+                    <img src=".vscode\images\student.jpg" alt="Student Spaces" class="card-img">
+                </div>
+                <div class="card-content">
+                    <h3>Student Spaces</h3>
+                    <p>Ask questions and collaborate in real-time forums.</p>
+                </div>
+            </a>
+        </div>
+    </section>
+
+    <section class="course-tracker">
+        <div class="tracker-header">
+            <h2>Pick up where you left off ✨</h2>
+            <a href="pages/student-portal.html" class="see-all">See all classes →</a>
+        </div>
+
+        <div class="tracker-cards">
+            
+            <div class="course-card border-mint">
+                <div class="card-image-wrapper tracker-img-box">
+                    <span class="category-tag">ENGINEERING</span>
+                    <img src=".vscode\images\computer science.jpg" alt="Intro to Computer Science" class="card-img">
+                </div>
+                <div class="course-info">
+                    <h3>Intro to Computer Science</h3>
+                    <p class="modules">12 Modules total</p>
+                    <div class="progress-text-row">
+                        <span>Progress</span>
+                        <span>40%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-fill fill-mint" style="width: 40%;"></div>
+                    </div>
+                    <button class="btn-primary btn-full">▶ Resume Lecture</button>
+                </div>
+            </div>
+
+            <div class="course-card border-yellow">
+                <div class="card-image-wrapper tracker-img-box">
+                    <span class="category-tag">BUSINESS SCHOOL</span>
+                    <img src=".vscode\images\business.jpg" alt="Modern Business Ethics" class="card-img">
+                </div>
+                <div class="course-info">
+                    <h3>Modern Business Ethics</h3>
+                    <p class="modules">8 Modules total</p>
+                    <div class="progress-text-row">
+                        <span>Progress</span>
+                        <span>10%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-fill fill-yellow" style="width: 10%;"></div>
+                    </div>
+                    <button class="btn-primary btn-full">▶ Resume Lecture</button>
+                </div>
+            </div>
+
+            <div class="course-card border-pink">
+                <div class="card-image-wrapper tracker-img-box">
+                    <span class="category-tag">SCIENCE</span>
+                    <img src=".vscode\images\advanced math.jpg" alt="Advanced Mathematics" class="card-img">
+                </div>
+                <div class="course-info">
+                    <h3>Advanced Mathematics</h3>
+                    <p class="modules">15 Modules total</p>
+                    <div class="progress-text-row">
+                        <span>Progress</span>
+                        <span>85%</span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-fill fill-pink" style="width: 85%;"></div>
+                    </div>
+                    <button class="btn-primary btn-full">▶ Resume Lecture</button>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <footer class="site-footer">
+        <div class="footer-content">
+            
+            <div class="footer-brand">
+                <div class="logo">
+                    <span class="logo-icon">✨</span>
+                    <span class="logo-text">StudyBuddies</span>
+                </div>
+                <p>We made studying less terrible.<br>Actually, we made it pretty fun.</p>
+                <div class="social-icons">
+                    <a href="#" class="social-btn">📷</a>
+                    <a href="#" class="social-btn">🐦</a>
+                    <a href="#" class="social-btn">👾</a>
+                </div>
+            </div>
+
+            <div class="footer-links">
+                <div class="link-column">
+                    <h4>Platform</h4>
+                    <ul>
+                        <li><a href="#">Spaces</a></li>
+                        <li><a href="#">Bookshelf</a></li>
+                        <li><a href="#">Chatter</a></li>
+                    </ul>
+                </div>
+                <div class="link-column">
+                    <h4>Support</h4>
+                    <ul>
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Advising</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="link-column">
+                    <h4>Company</h4>
+                    <ul>
+                        <li><a href="#">About</a></li>
+                        <li><a href="#">Blog</a></li>
+                        <li><a href="#">Careers</a></li>
+                    </ul>
+                </div>
+                <div class="link-column">
+                    <h4>Legal</h4>
+                    <ul>
+                        <li><a href="#">Privacy</a></li>
+                        <li><a href="#">Terms</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <p>© 2026 StudyBuddies Inc. All rights reserved.</p>
+            <p>Made with ❤️ for students.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const badge = document.getElementById("semester-badge");
+            
+            // Get current date details
+            const today = new Date();
+            const month = today.getMonth(); // 0 = Jan, 1 = Feb ... 11 = Dec
+            const date = today.getDate();
+            
+            let statusText = "🌴 Semester Break! Relax and recharge.";
+
+            // Generic logic for all students
+            if (month >= 8 || month === 0) {
+                statusText = "🔥 New Semester is live! Get ready.";
+            } else if (month >= 1 && month <= 5) {
+                statusText = "🔥 Semester in progress. Keep crushing it!";
+            } else {
+                statusText = "🌴 Semester Break! Relax and recharge.";
+            }
+
+            badge.textContent = statusText;
+        });
+    </script>
+    
+</body>
+</html>
