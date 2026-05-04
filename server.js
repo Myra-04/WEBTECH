@@ -8,7 +8,7 @@ const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-// This tells Express to look for style.css and images in the main folder
+app.use('/images', express.static('./.vscode/images'));
 app.use('/static', express.static(__dirname));
 app.use(express.static(__dirname));
 
@@ -45,14 +45,24 @@ app.get('/', async (req, res) => {
     
     let semesterStatus = "🌴 Semester Break! Relax and recharge.";
     let userCourses = [];
+    
+    // 1. Set up our default guest variables
     let userUniversity = "Guest";
+    let userName = "Student";
+    let userEmail = "";
 
     if (isLoggedIn) {
-        // Fetch User Profile to get their University
-        const { data: profile } = await supabase.from('profiles').select('university').eq('id', userId).single();
-        if (profile) userUniversity = profile.university;
+        // 2. Change select('university') to select('*') to grab the ENTIRE profile
+        const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).single();
+        
+        // 3. Assign the database data to our variables
+        if (profile) {
+            userUniversity = profile.university;
+            userName = profile.full_name; // Grabbing the name!
+            userEmail = profile.email;    // Grabbing the email!
+        }
 
-        // Custom Semester Logic based on University (Example)
+        // Custom Semester Logic based on University
         const month = new Date().getMonth() + 1; 
         if (userUniversity.includes('UTS') && month === 4) {
             semesterStatus = "🌴 UTS Mid-Semester Break!";
@@ -67,12 +77,15 @@ app.get('/', async (req, res) => {
         if (courses) userCourses = courses;
     }
     
+    // 4. Send ALL the new variables to your Nunjucks HTML file!
     res.render('index', { 
         cart_count: await getCartCount(userId), 
         is_logged_in: isLoggedIn, 
         semester_status: semesterStatus,
         courses: userCourses,
-        university: userUniversity
+        university: userUniversity,
+        user_name: userName,        // Send the name
+        user_email: userEmail       // Send the email
     });
 });
 

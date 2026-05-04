@@ -62,7 +62,7 @@
                             <p style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">{{ book.author }} | {{ book.course_code }}</p>
                             <div class="book-purchase-row">
                                 <span class="book-price">RM{{ book.price }}</span>
-                                <button class="add-to-cart-btn">🛒</button>
+                                <button class="add-to-cart-btn" data-book-id="{{ book.id }}">🛒</button>
                             </div>
                         </div>
                     </div>
@@ -81,28 +81,58 @@
         </div>
     </section>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            let cartCount = 0;
-            const badge = document.getElementById("cart-count");
-            const addToCartButtons = document.querySelectorAll(".add-to-cart-btn");
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const badge = document.getElementById("cart-count");
+        const addToCartButtons = document.querySelectorAll(".add-to-cart-btn");
 
-            addToCartButtons.forEach(button => {
-                button.addEventListener("click", function() {
-                    cartCount++;
-                    badge.textContent = cartCount;
+        addToCartButtons.forEach(button => {
+            button.addEventListener("click", async function() {
+                
+                // 1. Grab the secret book ID from the button we clicked
+                const bookId = this.getAttribute("data-book-id");
+
+                try {
+                    // 2. Send a POST request to the route already inside your server.js!
+                    const response = await fetch('/api/cart/add', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        // We pack the ID into a JSON box and send it over
+                        body: JSON.stringify({ book_id: bookId }) 
+                    });
+
+                    // 3. Wait for the server's reply
+                    const result = await response.json();
+
+                    // 4. If the database successfully saved it...
+                    if (result.success) {
+                        // Update the badge with the REAL database count!
+                        badge.textContent = result.new_cart_total;
+                        badge.style.display = "block"; 
+                        
+                        // Simple pop animation on click
+                        this.style.transform = "scale(0.9)";
+                        setTimeout(() => {
+                            this.style.transform = "scale(1)";
+                        }, 100);
+                        
+                    } else {
+                        // If it fails (like if they aren't logged in)
+                        alert(result.message);
+                        if (result.message === "Please log in first") {
+                            window.location.href = "/login"; // Send them to login page
+                        }
+                    }
                     
-                    // Make the badge visible
-                    badge.style.display = "block"; 
-                    
-                    // Simple pop animation on click
-                    this.style.transform = "scale(0.9)";
-                    setTimeout(() => {
-                        this.style.transform = "scale(1)";
-                    }, 100);
-                });
+                } catch (error) {
+                    console.error("🚨 Cart Error:", error);
+                    alert("Something went wrong connecting to the server.");
+                }
             });
         });
-    </script>
+    });
+</script>
 </body>
 </html>
