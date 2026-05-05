@@ -134,5 +134,69 @@
         });
     });
 </script>
+
+<div class="cart-overlay" id="cart-overlay"></div>
+    
+    <div class="cart-drawer" id="cart-drawer">
+        <div class="cart-header">
+            <h2>Your Cart 🛍️</h2>
+            <button class="close-cart-btn" id="close-cart">✕</button>
+        </div>
+
+        <div class="cart-items-container">
+            <div class="cart-item">
+                <img src="/images/calculus.jpg" alt="Book" class="cart-item-img">
+                <div class="cart-item-info">
+                    <span class="cart-item-title">Calculus 101: Advanced Methods</span>
+                    <span class="cart-item-price">RM 45</span>
+                    <button class="remove-btn">Remove</button>
+                </div>
+            </div>
+
+            <div class="cart-item">
+                <img src="/images/business.jpg" alt="Book" class="cart-item-img">
+                <div class="cart-item-info">
+                    <span class="cart-item-title">Modern Business Ethics</span>
+                    <span class="cart-item-price">RM 35</span>
+                    <button class="remove-btn">Remove</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span>RM 80</span>
+            </div>
+            <button onclick="window.location.href='/pages/checkout.html'" class="btn-primary btn-full">Secure Checkout 🔒</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const cartToggleBtn = document.getElementById('cart-toggle');
+            const cartDrawer = document.getElementById('cart-drawer');
+            const cartOverlay = document.getElementById('cart-overlay');
+            const closeCartBtn = document.getElementById('close-cart');
+
+            // Open the cart
+            cartToggleBtn.addEventListener('click', () => {
+                cartDrawer.classList.add('active');
+                cartOverlay.classList.add('active');
+            });
+
+            // Close the cart (by clicking the X or the dark background)
+            closeCartBtn.addEventListener('click', () => {
+                cartDrawer.classList.remove('active');
+                cartOverlay.classList.remove('active');
+            });
+
+            cartOverlay.addEventListener('click', () => {
+                cartDrawer.classList.remove('active');
+                cartOverlay.classList.remove('active');
+            });
+        });
+    </script>
+
 </body>
 </html>

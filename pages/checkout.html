@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBuddies | Secure Checkout</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+    <div class="blob blob-pink-1" style="top: -50px; left: -50px;"></div>
+    <div class="blob blob-yellow-1" style="top: 200px; right: -50px;"></div>
+
+    <nav class="navbar" style="justify-content: center;">
+        <a href="/" class="logo">
+            <span class="logo-icon">✨</span>
+            <span class="logo-text">StudyBuddies Checkout</span>
+        </a>
+    </nav>
+
+    <div class="checkout-container">
+        
+        <div class="checkout-header">
+            <h1 style="font-size: 2.5rem;">Complete your order 🚀</h1>
+            <p style="color: var(--text-muted); margin-top: 10px;">Almost there! Get ready to crush this semester.</p>
+        </div>
+
+        <div class="checkout-grid">
+            
+            <div class="checkout-form-section">
+                
+                <h2 class="checkout-section-title">Delivery Details</h2>
+                <form class="auth-form" style="margin-bottom: 40px;">
+                    <div class="input-group">
+                        <label>Full Name</label>
+                        <input type="text" placeholder="JT" required>
+                    </div>
+                    <div class="input-group">
+                        <label>Campus Location / Block</label>
+                        <input type="text" placeholder="e.g. Block A, Room 214" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Student ID</label>
+                            <input type="text" placeholder="Optional for easier pickup">
+                        </div>
+                        <div class="input-group">
+                            <label>Phone Number</label>
+                            <input type="tel" placeholder="01X-XXX XXXX" required>
+                        </div>
+                    </div>
+                </form>
+
+                <h2 class="checkout-section-title">Payment Method</h2>
+                
+                <div class="payment-methods">
+                    <div class="payment-method-card active" onclick="selectPayment(this)">
+                        💳 Credit/Debit Card
+                    </div>
+                    <div class="payment-method-card" onclick="selectPayment(this)">
+                        🏦 FPX Online Banking
+                    </div>
+                </div>
+
+                <form class="auth-form">
+                    <div class="input-group">
+                        <label>Card Number</label>
+                        <input type="text" placeholder="0000 0000 0000 0000" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Expiry Date</label>
+                            <input type="text" placeholder="MM/YY" required>
+                        </div>
+                        <div class="input-group">
+                            <label>CVV</label>
+                            <input type="text" placeholder="123" required>
+                        </div>
+                    </div>
+                </form>
+
+            </div>
+
+            <div class="checkout-summary-section">
+                <div class="order-summary-card">
+                    <h3 style="margin-bottom: 25px; font-size: 1.3rem;">Order Summary</h3>
+                    
+                    <div class="summary-item">
+                        <span class="summary-item-title">Calculus 101: Advanced Methods</span>
+                        <span class="summary-item-price">RM 45.00</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-item-title">Modern Business Ethics</span>
+                        <span class="summary-item-price">RM 35.00</span>
+                    </div>
+
+                    <div class="summary-divider"></div>
+
+                    <div class="summary-item">
+                        <span class="summary-item-title" style="color: var(--text-muted);">Subtotal</span>
+                        <span class="summary-item-price" style="color: var(--text-muted);">RM 80.00</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-item-title" style="color: var(--text-muted);">Platform Fee</span>
+                        <span class="summary-item-price" style="color: var(--text-muted);">RM 2.00</span>
+                    </div>
+
+                    <div class="summary-divider"></div>
+
+                    <div class="summary-total">
+                        <span>Total</span>
+                        <span>RM 82.00</span>
+                    </div>
+
+                    <button class="btn-primary btn-full btn-large" onclick="alert('Order placed successfully! Redirecting to your dashboard...')">Confirm Payment RM 82.00</button>
+
+                    <div class="secure-badge">
+                        🔒 Payments are secure and encrypted
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function selectPayment(clickedCard) {
+            // Remove active class from all cards
+            document.querySelectorAll('.payment-method-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            // Add active class to the clicked card
+            clickedCard.classList.add('active');
+        }
+    </script>
+</body>
+</html>

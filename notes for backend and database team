@@ -1,83 +1,37 @@
-UPDATE AS OF 27/04/2026
+UPDATE AS OF 05 MAY 2026
 
-1. Database Architecture (Supabase)
-We are using Supabase (PostgreSQL): I want us to use Supabase instead of raw AWS. It gives us a production-ready relational database and handles the authentication out of the box, which is going to save us a massive amount of time before the May deadline.
+Hey team, the UI for the Student Portal, Bookstore, Cart, and Checkout are fully designed and styled. Here is what we need to hook up on the server/database side to make it fully functional:
 
-Multi-University Support: I’ve decided to open the platform up to all universities. You need to add a university column to the users table so we know which school they belong to.
+1. The New Slide-Out Cart Drawer
 
-Email Validation: Since we are opening it up, make sure your registration logic accepts any valid .edu or .my student email address.
+Front-End Status: There is a new sliding cart UI built into the pages. Right now, it has hardcoded dummy books.
 
-2. The Bookstore Module
-Currency: I’ve set all the front-end pricing to RM (Ringgit Malaysia) to make it realistic. Make sure the database stores these correctly and your APIs pass the values to my UI in RM format.
+Backend Task: We are currently only sending cart_count to the HTML. We need to update the route to also send the actual items in the user's cart (Book Title, Price, Image URL).
 
-Search Function: I built the search bar UI in bookstore.html. I need you to wrap my .search-bar container in a <form> tag with a GET method so it actually queries Supabase for books by title, author, or course code.
+DB Task: Ensure the cart_items table has a join/relation to the books table so we can fetch the book details easily for the logged-in user.
 
-Shopping Cart Logic: Right now, my "Add to Cart" buttons just trigger a visual animation. You must intercept my front-end click events and actually push the Item ID to the logged-in user's cart in the database.
+2. The New Checkout Page (checkout.html)
 
-Cart Badge: On initial page load, you need to fetch the user's current cart total from Supabase and dynamically update the badge number in my navigation bar.
+Front-End Status: The checkout UI is done. It includes a form for Delivery Details, a toggle for FPX/Credit Card, and an Order Summary showing RM pricing.
 
-3. Authentication & Routing (Student Portal)
-Form Integration: I built a single-page toggle for the Login and Registration forms (student-portal.html). You need to wire my #form-login and #form-register tags up to Supabase Auth. Use the name="..." attributes I set on the inputs to extract the data.
+Backend Task: * Create a app.get('/checkout') route to serve the checkout.html file.
 
-Smart Redirection: Right now, I have all the action buttons ("My Dashboard", "Explore Classes", "Resume Lecture") pointing to the login page. I need you to write an Auth Check—if a user is already logged in, clicking those buttons should bypass the portal and take them straight to the actual Dashboard.
+Create a app.post('/api/checkout') route to process the payment form.
 
-Base URLs: To fix linking issues between folders, please configure a Base URL environment variable. That way, I can just write simple absolute paths like href="/login" or href="/shop" on the front-end and you guys can handle the routing.
+Once checkout is successful, the logic should clear the user's current cart.
 
-4. Dynamic Content (Homepage)
-Course Tracker: The "Pick up where you left off" cards are currently hardcoded with placeholders. You need to query the database to inject the specific course titles, module counts, and images for whatever user is logged in.
+DB Task: We need two new tables: orders (to track total price, user_id, delivery block) and order_items (to track which specific books they bought).
 
-Progress Bars: I am using inline CSS to fill the progress bars (e.g., style="width: 40%;"). You need to calculate the user's completion percentage on the backend and dynamically inject that number into my HTML.
+3. Login/Register Error Handling
 
-Semester Status Badge: I wrote a Javascript fallback for the "Semester is live" badge, but since we are supporting multiple universities, you'll need to pass the specific university's calendar data to the front-end when the user logs in so the dates (like mid-semester breaks) are accurate.
+Front-End Status: I added a JavaScript interceptor to student-portal.html. It now catches wrong passwords and shows a beautiful red error box on the screen without reloading the page.
 
-!! IMPORTANT NOTES FOR DATABASE TEAM !!
+Backend Task: No major changes needed, but please keep ensuring that auth errors return the proper HTTP status codes (e.g., res.status(401).send("Invalid email or password")). The front-end is specifically looking for those error codes to trigger the red box!
 
-Here is the complete, combined list of everything we need on the backend and database side to make my UI actually work.
+4. Course Hub & "Resume Lecture" Logic (Heads Up!)
 
-1. General Backend & Auth Tasks
-Supabase Auth: Please wire my #form-login and #form-register tags up to Supabase Auth. Also, make sure registration accepts any valid .edu or .my student email
+Front-End Status: The Dashboard course cards are ready.
 
-Smart Redirection: Right now, my action buttons ("Explore Classes", "My Dashboard") link to the login portal. You need to write an Auth Check—if a user is already logged in, clicking those buttons should bypass the portal and take them straight to their Dashboard.
+Backend/DB Task: For our next big feature (the actual video player), we will need to track exactly where a user left off in a module. The database will need to store video completion status so the backend can calculate the progress_percentage. If progress is 100%, the UI will show "Completed", otherwise it will show the "Resume Lecture" button. dates are accurate.
 
-Base URLs: To fix linking issues between folders, please configure a Base URL environment variable so I can use simple absolute paths (like href="/login").
-
-2. Urgent Database Fixes (For existing tables)
-I reviewed the SQL schemas you drafted, there are a few critical bugs we need to fix before we move forward:
-
-orders table bug 1: The foreign key is on the wrong column. You have foreign KEY (id) references auth.users (id). This links the Order's ID to the User ID, meaning a user can only ever make one order in their life. The foreign key needs to be on a user_id column instead.
-
-orders table bug 2: You have user_id set to default gen_random_uuid(). If the code fails to pass the logged-in user's ID, it will invent a ghost user. It should be null or required, but not a random generator.
-
-profiles table fix: I love the university and avatar_url additions! However, let's remove learning_progress. My front-end tracks progress per course, so a single integer on the profile won't work (see the user_progress table below).
-
-books table fix: Make sure the price column is a Decimal/Numeric type, not an Integer, so it can handle RM cents properly. Also, please add a course_code column (e.g., 'BIO101') so my front-end search bar can filter books by class.
-
-3. The Complete Missing Table Blueprint
-To make my specific UI designs work, here are the exact tables we need in Supabase:
-
-A. The Bookstore Module
-
-cart_items: I need this for my shopping bag badge. It temporarily stores user_id, book_id, and quantity before they check out.
-
-order_items: Once they actually buy something and it goes to your orders table, we need this table to link the Order ID to the specific Book IDs they purchased.
-
-B. The Course Tracker (Homepage)
-
-courses: You have course_materials (which is great for files), but I need a catalog table. My UI cards need title, category, image_url (thumbnail), and total_modules (e.g., 12).
-
-user_progress: This links user_id to course_id. It tracks completed_modules so the backend can calculate the math and inject the percentage into my HTML progress bars.
-
-C. The Community
-
-spaces / forum_posts: My navigation bar has links for "Spaces" and "Chatter." We need a table to store discussion threads, user_id, timestamps, and the messages.
-
-4. Dynamic Data Hooks (What you need to inject into my HTML)
-Cart Badge: On initial page load, fetch the user's current cart total from cart_items and dynamically update the badge number in my navigation bar.
-
-Search Form: Wrap my .search-bar container in bookstore.html in a <form> tag with a GET method to query the books table.
-
-Course Tracker: Query courses and user_progress to replace my placeholder cards with the user's actual recently opened courses.
-
-Semester Badge: Pass the user's specific university calendar data to the front-end when they log in so my "Semester is live!" badge dates are accurate.
-
-ASK ME IF GOT ANY QUESTIONS REGARDING FRONT END THANKS
+ASK ME IF GOT ANY QUESTIONS/NEEDS REGARDING FRONT END THANKS
