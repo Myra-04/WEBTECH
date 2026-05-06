@@ -86,34 +86,39 @@
                 <div class="order-summary-card">
                     <h3 style="margin-bottom: 25px; font-size: 1.3rem;">Order Summary</h3>
                     
-                    <div class="summary-item">
-                        <span class="summary-item-title">Calculus 101: Advanced Methods</span>
-                        <span class="summary-item-price">RM 45.00</span>
-                    </div>
-                    <div class="summary-item">
-                        <span class="summary-item-title">Modern Business Ethics</span>
-                        <span class="summary-item-price">RM 35.00</span>
-                    </div>
+                    {% if cart_items and cart_items.length > 0 %}
+                        {% for item in cart_items %}
+                        <div class="summary-item">
+                            <span class="summary-item-title">{{ item.title }}</span>
+                            <span class="summary-item-price">RM {{ item.price }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="summary-item">
+                            <span class="summary-item-title" style="color: var(--text-muted); font-style: italic;">No items in cart</span>
+                            <span class="summary-item-price">RM 0.00</span>
+                        </div>
+                    {% endif %}
 
                     <div class="summary-divider"></div>
 
                     <div class="summary-item">
                         <span class="summary-item-title" style="color: var(--text-muted);">Subtotal</span>
-                        <span class="summary-item-price" style="color: var(--text-muted);">RM 80.00</span>
+                        <span class="summary-item-price" style="color: var(--text-muted);">RM {{ subtotal | default('0.00') }}</span>
                     </div>
                     <div class="summary-item">
                         <span class="summary-item-title" style="color: var(--text-muted);">Platform Fee</span>
-                        <span class="summary-item-price" style="color: var(--text-muted);">RM 2.00</span>
+                        <span class="summary-item-price" style="color: var(--text-muted);">RM {{ platform_fee | default('2.00') }}</span>
                     </div>
 
                     <div class="summary-divider"></div>
 
                     <div class="summary-total">
                         <span>Total</span>
-                        <span>RM 82.00</span>
+                        <span>RM {{ final_total | default('0.00') }}</span>
                     </div>
 
-                    <button class="btn-primary btn-full btn-large" onclick="alert('Order placed successfully! Redirecting to your dashboard...')">Confirm Payment RM 82.00</button>
+                    <button class="btn-primary btn-full btn-large" onclick="processCheckout()">Confirm Payment RM {{ final_total | default('0.00') }}</button>
 
                     <div class="secure-badge">
                         🔒 Payments are secure and encrypted
@@ -121,17 +126,30 @@
                 </div>
             </div>
 
+    <div class="success-overlay" id="success-modal">
+        <div class="success-modal">
+            <div class="success-icon">🎉</div>
+            <h2 style="margin-bottom: 10px; font-size: 1.8rem;">Payment Successful!</h2>
+            <p style="color: var(--text-muted); line-height: 1.5;">Your books have been added to your digital bookshelf. Redirecting you to your dashboard...</p>
         </div>
     </div>
 
     <script>
+        // Toggle the payment method styling
         function selectPayment(clickedCard) {
-            // Remove active class from all cards
-            document.querySelectorAll('.payment-method-card').forEach(card => {
-                card.classList.remove('active');
-            });
-            // Add active class to the clicked card
+            document.querySelectorAll('.payment-method-card').forEach(card => card.classList.remove('active'));
             clickedCard.classList.add('active');
+        }
+
+        // The Checkout Animation & Redirect Logic
+        function processCheckout() {
+            // 1. Show the beautiful modal
+            document.getElementById('success-modal').classList.add('active');
+            
+            // 2. Wait exactly 3 seconds, then redirect them to the dashboard!
+            setTimeout(() => {
+                window.location.href = '/#dashboard'; // Sends them back home
+            }, 3000); 
         }
     </script>
 </body>

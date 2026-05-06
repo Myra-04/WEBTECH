@@ -34,4 +34,14 @@ Front-End Status: The Dashboard course cards are ready.
 
 Backend/DB Task: For our next big feature (the actual video player), we will need to track exactly where a user left off in a module. The database will need to store video completion status so the backend can calculate the progress_percentage. If progress is 100%, the UI will show "Completed", otherwise it will show the "Resume Lecture" button. dates are accurate.
 
+NEW UPDATE 06 MAY 2026:
+
+BACKEND:
+
+- The server now needs to manage a streamlined flow that prioritizes videos and books while removing the old "classes" terminology. The main dashboard route must check for a user session to decide whether to show the guest hero section or the private student bookshelf. The new Spaces route is responsible for fetching all available videos from the database to populate your 3x3 grid, while the Video Player route uses a dynamic ID to pull a specific video and its associated class discussions. We have also added a security layer so that if a guest tries to click the cart or access the checkout page, the backend will automatically intercept that request and redirect them to the login portal. Finally, the checkout logic must be updated to move items from the temporary cart into the user's permanent digital bookshelf once the payment is confirmed.
+
+DATABASE:
+
+- Your database tables must be restructured to support the simplified, professional layout of the app. The - Videos Table - is the core of the Spaces page and needs to store the title, a descriptive summary, the category tag, and the URLs for both the thumbnail image and the actual video file. To power the Live Q&A, a - Comments Table -  must be linked to the videos so that students can post questions that stay attached to the correct lecture. The - Books Table - handles the bookstore inventory with titles, authors, and prices in RM, while a separate - Purchased Books Table - tracks which books a student has bought so they appear on their dashboard.
+
 ASK ME IF GOT ANY QUESTIONS/NEEDS REGARDING FRONT END THANKS

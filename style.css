@@ -778,8 +778,23 @@ h1, h2, h3, .logo-text {
 /* Book Grid */
 .book-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    /* Forces exactly 3 columns */
+    grid-template-columns: repeat(3, 1fr); 
     gap: 30px;
+    align-items: start;
+}
+
+/* Mobile Responsiveness so the 3x3 grid doesn't squash on small screens */
+@media (max-width: 992px) {
+    .book-grid {
+        grid-template-columns: repeat(2, 1fr); 
+    }
+}
+
+@media (max-width: 768px) {
+    .book-grid {
+        grid-template-columns: 1fr;
+    }
 }
 
 .book-card {
@@ -1274,4 +1289,235 @@ h1, h2, h3, .logo-text {
     font-size: 0.85rem;
     margin-top: 20px;
     font-weight: 600;
+}
+
+/* --- 15. COURSE HUB (VIDEO PLAYER) --- */
+.course-hub-container {
+    max-width: 1400px;
+    margin: 40px auto;
+    padding: 0 40px;
+    display: grid;
+    grid-template-columns: 1fr 380px; /* Video takes remaining space, sidebar is 380px */
+    gap: 30px;
+    align-items: start;
+}
+
+/* LEFT SIDE: Video Player & Info */
+.video-section {
+    background: var(--white);
+    border-radius: 20px;
+    overflow: hidden;
+    border: 2px solid #eaeaea;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+}
+
+.video-player-placeholder {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    background-color: var(--black);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    color: white;
+}
+
+.play-btn-large {
+    width: 80px;
+    height: 80px;
+    background: var(--mint-green);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: none;
+    margin-bottom: 15px;
+}
+
+.play-btn-large:hover { 
+    transform: scale(1.1); 
+    box-shadow: 0 0 20px rgba(0, 210, 180, 0.4);
+}
+
+.video-details {
+    padding: 25px;
+}
+
+.video-title {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.video-progress-row {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+/* Tabs underneath the video */
+.course-tabs {
+    display: flex;
+    gap: 30px;
+    border-bottom: 2px solid #eaeaea;
+    padding: 0 25px;
+    background: var(--white);
+}
+
+.course-tab {
+    padding: 15px 0;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: color 0.2s;
+}
+
+.course-tab.active {
+    color: var(--text-dark);
+    border-color: var(--mint-green);
+}
+
+.course-tab:hover:not(.active) {
+    color: var(--text-dark);
+}
+
+.tab-content {
+    padding: 25px;
+    background: var(--white);
+    border-radius: 0 0 20px 20px;
+    border: 2px solid #eaeaea;
+    border-top: none;
+    min-height: 200px;
+}
+
+.discussion-post {
+    background: var(--bg-color);
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    border: 1px solid #eaeaea;
+}
+
+/* RIGHT SIDE: Module Sidebar */
+.module-sidebar {
+    background: var(--white);
+    border-radius: 20px;
+    border: 2px solid #eaeaea;
+    /* Keeps the sidebar sticky when scrolling the main page */
+    height: calc(100vh - 120px); 
+    position: sticky;
+    top: 100px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+}
+
+.module-header {
+    padding: 20px;
+    border-bottom: 2px solid #eaeaea;
+}
+
+.module-list {
+    overflow-y: auto;
+    flex-grow: 1;
+}
+
+/* Custom Scrollbar for the module list */
+.module-list::-webkit-scrollbar { width: 6px; }
+.module-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+
+.module-item {
+    padding: 15px 20px;
+    border-bottom: 1px solid #eaeaea;
+    display: flex;
+    gap: 15px;
+    cursor: pointer;
+    transition: background 0.2s;
+    align-items: center;
+}
+
+.module-item:hover { background: #f9f9f9; }
+
+/* The different UI states for the backend to use later! */
+.module-item.active { 
+    background: var(--pastel-mint); 
+    border-left: 4px solid var(--mint-green); 
+}
+
+.module-item.completed .module-icon { 
+    color: var(--mint-green); 
+}
+
+.module-item.locked { 
+    opacity: 0.5; 
+    cursor: not-allowed; 
+    background: var(--bg-color);
+}
+
+.module-icon { 
+    font-size: 1.2rem; 
+    width: 25px;
+    text-align: center;
+}
+
+.module-info h4 { 
+    font-size: 0.95rem; 
+    margin-bottom: 4px; 
+}
+
+.module-info p { 
+    font-size: 0.8rem; 
+    color: var(--text-muted); 
+}
+
+/* --- 16. CHECKOUT SUCCESS MODAL --- */
+.success-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    z-index: 3000;
+    display: none;
+    align-items: center; 
+    justify-content: center;
+    opacity: 0; 
+    transition: opacity 0.3s;
+}
+
+.success-overlay.active {
+    display: flex; 
+    opacity: 1;
+}
+
+.success-modal {
+    background: var(--white);
+    padding: 50px 40px; 
+    border-radius: 30px;
+    text-align: center; 
+    max-width: 400px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.1);
+    transform: translateY(20px); 
+    transition: transform 0.3s;
+}
+
+.success-overlay.active .success-modal {
+    transform: translateY(0);
+}
+
+.success-icon {
+    font-size: 4.5rem; 
+    margin-bottom: 20px;
+    display: inline-block;
+    animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes popIn {
+    0% { transform: scale(0); }
+    100% { transform: scale(1); }
 }

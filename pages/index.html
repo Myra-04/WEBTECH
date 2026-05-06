@@ -17,9 +17,8 @@
         </a>
         
         <ul class="nav-links">
-            <li><a href="#">Spaces</a></li>
-            <li><a href="/bookstore">Bookstore</a></li>
-            <li><a href="#">Chatter</a></li>
+            <li><a href="/pages/spaces.html">Spaces</a></li>
+            <li><a href="/bookstore">Bookshelf</a></li>
         </ul>
 
         <div class="nav-actions">
@@ -43,8 +42,8 @@
         <p>Toss the boring portals.<br>Connect with classmates, crush your exams, buy required books, and actually enjoy learning again.</p>
         <br>
         <div class="hero-buttons">
-            <button onclick="window.location.href='/login'" class="btn-primary btn-large">Explore Classes 🚀</button>
-            <button class="btn-secondary">⭐ See what's hot</button>
+            <button onclick="window.location.href='/pages/spaces.html'" class="btn-primary btn-large">Explore Classes 🚀</button>
+            <button onclick="window.location.href='/bookstore'" class="btn-secondary">⭐ See what's hot</button>
         </div>
 
         <div class="hero-collage">
@@ -74,7 +73,8 @@
         </div>
 
         <div class="features-grid">
-            <a href="pages/course-template.html" class="feature-card card-yellow">
+            
+            <a href="/pages/spaces.html" class="feature-card card-yellow">
                 <div class="card-icon">📖</div>
                 <div class="card-image-wrapper">
                     <img src="/images/course.jpg" alt="Course Hub" class="card-img">
@@ -85,14 +85,14 @@
                 </div>
             </a>
 
-            <a href="pages/forum-template.html" class="feature-card card-pink">
+            <a href="/pages/spaces.html" class="feature-card card-pink">
                 <div class="card-icon">👥</div>
                 <div class="card-image-wrapper">
-                    <img src="/images/student.jpg" alt="Student Spaces" class="card-img">
+                    <img src="/images/student.jpg" alt="Spaces" class="card-img">
                 </div>
                 <div class="card-content">
-                    <h3>Student Spaces</h3>
-                    <p>Ask questions and collaborate in real-time forums.</p>
+                    <h3>Spaces</h3>
+                    <p>Ask questions and collaborate in real-time.</p>
                 </div>
             </a>
 
@@ -107,22 +107,12 @@
                 </div>
             </a>
 
-            <a href="/login" class="feature-card card-pink">
-                <div class="card-icon">👥</div>
-                <div class="card-image-wrapper">
-                    <img src="/images/student.jpg" alt="Student Spaces" class="card-img">
-                </div>
-                <div class="card-content">
-                    <h3>Student Spaces</h3>
-                    <p>Ask questions and collaborate in real-time forums.</p>
-                </div>
-            </a>
         </div>
     </section>
 
     {% else %}
         
-    <section class="course-tracker" id="course-tracker" style="margin-top: 60px; min-height: 60vh;">
+    <section class="course-tracker" id="dashboard" style="margin-top: 60px;">
         
         <div style="text-align: center; margin-bottom: 50px;">
             <h1 style="font-size: 2.5rem; font-family: 'Poppins', sans-serif;">Welcome back to {{ university | default('Campus') }}! 🎓</h1>
@@ -131,50 +121,75 @@
 
         <div class="tracker-header">
             <h2>Your Enrolled Classes ✨</h2>
-            <a href="/bookstore" class="see-all">Find more books →</a>
+            <a href="/pages/spaces.html" class="see-all">Find more lectures →</a>
         </div>
 
         <div class="tracker-cards">
-            {% for course in courses %}
-            
-            <div class="course-card border-{{ loop.cycle('mint', 'yellow', 'pink') }}">
-                <div class="tracker-img-box" style="background-image: url('{{ course.image_url }}'); background-size: cover; background-position: center;">
-                    <span class="category-tag">{{ course.category }}</span>
-                </div>
-                
-                <div class="course-info">
-                    <h3>{{ course.title }}</h3>
-                    <span class="modules">{{ course.completed_modules }} / {{ course.total_modules }} Modules Completed</span>
-                    
-                    <div class="progress-container">
-                        <div class="progress-text-row">
-                            <span>Progress</span>
-                            <span>{{ course.progress_percentage }}%</span>
-                        </div>
-                        <div class="progress-bar-bg">
-                            <div class="progress-fill fill-{{ loop.cycle('mint', 'yellow', 'pink') }}" style="width: {{ course.progress_percentage }}%;"></div>
-                        </div>
+            {% if courses and courses.length > 0 %}
+                {% for course in courses %}
+                <div class="course-card border-{{ loop.cycle('mint', 'yellow', 'pink') }}">
+                    <div class="tracker-img-box" style="background-image: url('{{ course.thumbnail_url }}'); background-size: cover; background-position: center;">
+                        <span class="category-tag">{{ course.category }}</span>
                     </div>
-                    
-                    <button class="btn-primary btn-full" style="margin-top: 15px;">▶ Resume Lecture</button>
+                    <div class="course-info">
+                        <h3>{{ course.title }}</h3>
+                        
+                        <div class="progress-container" style="margin-top: 10px;">
+                            <div class="progress-text-row">
+                                <span>Progress</span>
+                                <span>{{ course.progress_percentage }}%</span>
+                            </div>
+                            <div class="progress-bar-bg">
+                                <div class="progress-fill fill-{{ loop.cycle('mint', 'yellow', 'pink') }}" style="width: {{ course.progress_percentage }}%;"></div>
+                            </div>
+                        </div>
+                        
+                        <button onclick="window.location.href='/video/{{ course.id }}'" class="btn-primary btn-full" style="margin-top: 15px;">▶ Resume Lecture</button>
+                    </div>
                 </div>
-            </div>
-
+                {% endfor %}
             {% else %}
-            <div style="padding: 40px; text-align: center; width: 100%; border: 2px dashed #eaeaea; border-radius: 20px;">
-                <h3>No courses yet! 📚</h3>
-                <p style="color: var(--text-muted); margin-bottom: 20px;">Head over to the Bookstore to grab your first module.</p>
-                <button onclick="window.location.href='/bookstore'" class="btn-primary">Go to Bookstore</button>
-            </div>
-            {% endfor %}
+                <div style="padding: 40px; text-align: center; width: 100%; border: 2px dashed #eaeaea; border-radius: 20px;">
+                    <h3>No classes yet! 🎥</h3>
+                    <button onclick="window.location.href='/pages/spaces.html'" class="btn-primary" style="margin-top: 15px;">Browse Spaces</button>
+                </div>
+            {% endif %}
         </div>
+
+        <div class="tracker-header" style="margin-top: 60px;">
+            <h2>Your Digital Bookshelf 📚</h2>
+            <a href="/bookstore" class="see-all">Shop for more →</a>
+        </div>
+
+        <div class="book-grid">
+            {% if purchased_books and purchased_books.length > 0 %}
+                {% for book in purchased_books %}
+                <div class="book-card" style="border: 2px solid #eaeaea;">
+                    <div class="book-image-wrapper" style="height: 180px;">
+                        <img src="{{ book.image_url }}" alt="Book" class="book-img">
+                    </div>
+                    <div class="book-details">
+                        <h3 class="book-title" style="margin-bottom: 5px;">{{ book.title }}</h3>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">By {{ book.author }}</p>
+                        <button class="btn-secondary btn-full">Read eBook 📖</button>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="grid-column: 1 / -1; padding: 40px; text-align: center; width: 100%; border: 2px dashed #eaeaea; border-radius: 20px;">
+                    <h3>Your shelf is empty! 📚</h3>
+                    <p style="color: var(--text-muted); margin-top: 5px; margin-bottom: 15px;">Books you buy at checkout will appear right here.</p>
+                    <button onclick="window.location.href='/bookstore'" class="btn-primary">Go to Bookstore</button>
+                </div>
+            {% endif %}
+        </div>
+
     </section>
 
     {% endif %}
 
     <footer class="site-footer">
         <div class="footer-content">
-            
             <div class="footer-brand">
                 <div class="logo">
                     <span class="logo-icon">✨</span>
@@ -192,9 +207,8 @@
                 <div class="link-column">
                     <h4>Platform</h4>
                     <ul>
-                        <li><a href="#">Spaces</a></li>
+                        <li><a href="/pages/spaces.html">Spaces</a></li>
                         <li><a href="/bookstore">Bookshelf</a></li>
-                        <li><a href="#">Chatter</a></li>
                     </ul>
                 </div>
                 <div class="link-column">
@@ -203,21 +217,6 @@
                         <li><a href="#">Help Center</a></li>
                         <li><a href="#">Advising</a></li>
                         <li><a href="#">Contact Us</a></li>
-                    </ul>
-                </div>
-                <div class="link-column">
-                    <h4>Company</h4>
-                    <ul>
-                        <li><a href="#">About</a></li>
-                        <li><a href="#">Blog</a></li>
-                        <li><a href="#">Careers</a></li>
-                    </ul>
-                </div>
-                <div class="link-column">
-                    <h4>Legal</h4>
-                    <ul>
-                        <li><a href="#">Privacy</a></li>
-                        <li><a href="#">Terms</a></li>
                     </ul>
                 </div>
             </div>
@@ -233,7 +232,6 @@
         document.addEventListener("DOMContentLoaded", function() {
             const badge = document.getElementById("semester-badge");
             
-            // Only run this logic if the badge exists on the page (Guest View)
             if (badge && badge.textContent === "Loading status...") {
                 const today = new Date();
                 const month = today.getMonth(); 
@@ -262,57 +260,65 @@
         </div>
 
         <div class="cart-items-container">
-            <div class="cart-item">
-                <img src="/images/calculus.jpg" alt="Book" class="cart-item-img">
-                <div class="cart-item-info">
-                    <span class="cart-item-title">Calculus 101: Advanced Methods</span>
-                    <span class="cart-item-price">RM 45</span>
-                    <button class="remove-btn">Remove</button>
+            {% if cart_items and cart_items.length > 0 %}
+                {% for item in cart_items %}
+                <div class="cart-item">
+                    <img src="{{ item.image_url }}" alt="Book Image" class="cart-item-img">
+                    <div class="cart-item-info">
+                        <span class="cart-item-title">{{ item.title }}</span>
+                        <span class="cart-item-price">RM {{ item.price }}</span>
+                        <form action="/api/cart/remove" method="POST">
+                            <input type="hidden" name="item_id" value="{{ item.id }}">
+                            <button type="submit" class="remove-btn">Remove</button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-
-            <div class="cart-item">
-                <img src="/images/business.jpg" alt="Book" class="cart-item-img">
-                <div class="cart-item-info">
-                    <span class="cart-item-title">Modern Business Ethics</span>
-                    <span class="cart-item-price">RM 35</span>
-                    <button class="remove-btn">Remove</button>
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 40px 20px; color: var(--text-muted);">
+                    <p style="font-size: 2.5rem; margin-bottom: 15px;">🛒</p>
+                    <p>Your cart is empty.</p>
+                    <p style="font-size: 0.85rem; margin-top: 10px;">Go to the Bookshelf to add some items!</p>
                 </div>
-            </div>
+            {% endif %}
         </div>
 
         <div class="cart-footer">
             <div class="cart-total">
                 <span>Total:</span>
-                <span>RM 80</span>
+                <span>RM {{ cart_total | default('0.00') }}</span>
             </div>
-            <button onclick="window.location.href='pages/checkout.html'" class="btn-primary btn-full">Secure Checkout 🔒</button>
+            <button onclick="window.location.href='/pages/checkout.html'" class="btn-primary btn-full">Secure Checkout 🔒</button>
         </div>
-    </div>
-
-    <script>
+    </div> <script>
         document.addEventListener("DOMContentLoaded", function() {
             const cartToggleBtn = document.getElementById('cart-toggle');
             const cartDrawer = document.getElementById('cart-drawer');
             const cartOverlay = document.getElementById('cart-overlay');
             const closeCartBtn = document.getElementById('close-cart');
 
-            // Open the cart
-            cartToggleBtn.addEventListener('click', () => {
-                cartDrawer.classList.add('active');
-                cartOverlay.classList.add('active');
-            });
+            if (cartToggleBtn) {
+                cartToggleBtn.addEventListener('click', () => {
+                    {% if is_logged_in %}
+                        cartDrawer.classList.add('active');
+                        cartOverlay.classList.add('active');
+                    {% else %}
+                        window.location.href = '/login';
+                    {% endif %}
+                });
+            }
 
-            // Close the cart (by clicking the X or the dark background)
-            closeCartBtn.addEventListener('click', () => {
-                cartDrawer.classList.remove('active');
-                cartOverlay.classList.remove('active');
-            });
+            if (closeCartBtn && cartOverlay) {
+                closeCartBtn.addEventListener('click', () => {
+                    cartDrawer.classList.remove('active');
+                    cartOverlay.classList.remove('active');
+                });
 
-            cartOverlay.addEventListener('click', () => {
-                cartDrawer.classList.remove('active');
-                cartOverlay.classList.remove('active');
-            });
+                cartOverlay.addEventListener('click', () => {
+                    cartDrawer.classList.remove('active');
+                    cartOverlay.classList.remove('active');
+                });
+            }
         });
     </script>
 </body>
