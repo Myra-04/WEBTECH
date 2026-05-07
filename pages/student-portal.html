@@ -19,7 +19,7 @@
             <span class="logo-text">StudyBuddies</span>
         </a>
         <ul class="nav-links">
-            <li><a href="/pages/spaces.html">Spaces</a></li></a></li>
+            <li><a href="/spaces">Spaces</a></li></a></li>
             <li><a href="/bookstore">Bookshelf</a></li>
         </ul>
         <div class="nav-actions">
@@ -144,16 +144,14 @@
 
             // 2. FORM INTERCEPTOR LOGIC (Catching Backend Errors smoothly)
             async function handleFormSubmit(event, form, errorBoxId) {
-                event.preventDefault(); // Stop the page from refreshing immediately
+                event.preventDefault(); 
                 const errorBox = document.getElementById(errorBoxId);
-                errorBox.style.display = 'none'; // Hide old errors
+                errorBox.style.display = 'none'; 
 
-                // Gather the data typed into the form
                 const formData = new FormData(form);
                 const data = Object.fromEntries(formData.entries());
 
                 try {
-                    // Send the data to the backend silently
                     const response = await fetch(form.action, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -161,10 +159,8 @@
                     });
 
                     if (response.ok || response.redirected) {
-                        // Success! Send them to the dashboard
                         window.location.href = response.url || '/#course-tracker';
                     } else {
-                        // Backend threw an error (like 401 Invalid Password)! Catch it and show it.
                         const errText = await response.text();
                         errorBox.textContent = errText || "Something went wrong. Please try again.";
                         errorBox.style.display = 'block';
@@ -175,7 +171,6 @@
                 }
             }
 
-            // Attach the interceptor to both forms
             formLogin.addEventListener("submit", (e) => handleFormSubmit(e, formLogin, "login-error"));
             formRegister.addEventListener("submit", (e) => handleFormSubmit(e, formRegister, "register-error"));
         });
@@ -190,34 +185,54 @@
         </div>
 
         <div class="cart-items-container">
-            <div class="cart-item">
-                <img src="/images/calculus.jpg" alt="Book" class="cart-item-img">
-                <div class="cart-item-info">
-                    <span class="cart-item-title">Calculus 101: Advanced Methods</span>
-                    <span class="cart-item-price">RM 45</span>
-                    <button class="remove-btn">Remove</button>
-                </div>
-            </div>
-
-            <div class="cart-item">
-                <img src="/images/business.jpg" alt="Book" class="cart-item-img">
-                <div class="cart-item-info">
-                    <span class="cart-item-title">Modern Business Ethics</span>
-                    <span class="cart-item-price">RM 35</span>
-                    <button class="remove-btn">Remove</button>
-                </div>
-            </div>
+            <!-- DYNAMIC NUNJUCKS LOOP FOR THE CART ITEMS -->
+            {% if cart_items and cart_items.length > 0 %}
+                {% for item in cart_items %}
+                    <div class="cart-item">
+                        <img src="{{ item.books.image_url or '/images/placeholder.jpg' }}" alt="Book" class="cart-item-img">
+                        <div class="cart-item-info">
+                            <span class="cart-item-title">{{ item.books.title }}</span>
+                            <span class="cart-item-price">RM {{ item.books.price }}</span>
+                            <!-- REMOVE BUTTON -->
+                            <button class="remove-btn" onclick="removeFromCart('{{ item.id }}')" style="color: #ff4757; background: transparent; border: none; font-weight: bold; cursor: pointer; padding: 0; margin-top: 5px;">Remove</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; padding: 30px; color: var(--text-muted);">Your cart is empty! ✨</p>
+            {% endif %}
         </div>
 
         <div class="cart-footer">
             <div class="cart-total">
                 <span>Total:</span>
-                <span>RM 80</span>
+                <span id="drawer-total-price">RM 0.00</span>
             </div>
-            <button onclick="window.location.href='/pages/checkout.html'" class="btn-primary btn-full">Secure Checkout 🔒</button>
+            <!-- FIXED CHECKOUT LINK -->
+            <button onclick="window.location.href='/checkout'" class="btn-primary btn-full">Secure Checkout 🔒</button>
         </div>
+
+        <!-- JAVASCRIPT FOR CART MATH -->
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                let drawerTotal = 0;
+                
+                // Nunjucks injects the prices into JavaScript for safe math
+                {% if cart_items and cart_items.length > 0 %}
+                    {% for item in cart_items %}
+                        drawerTotal += {{ item.books.price }};
+                    {% endfor %}
+                {% endif %}
+                
+                const totalDisplay = document.getElementById('drawer-total-price');
+                if (totalDisplay) {
+                    totalDisplay.textContent = 'RM ' + drawerTotal.toFixed(2);
+                }
+            });
+        </script>
     </div>
 
+    <!-- MAIN CART TOGGLE & REMOVE LOGIC -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const cartToggleBtn = document.getElementById('cart-toggle');
@@ -231,7 +246,7 @@
                 cartOverlay.classList.add('active');
             });
 
-            // Close the cart (by clicking the X or the dark background)
+            // Close the cart
             closeCartBtn.addEventListener('click', () => {
                 cartDrawer.classList.remove('active');
                 cartOverlay.classList.remove('active');
@@ -242,6 +257,28 @@
                 cartOverlay.classList.remove('active');
             });
         });
+
+        // REMOVE FROM CART LOGIC
+        async function removeFromCart(cartItemId) {
+            try {
+                const response = await fetch('/api/cart/remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cart_item_id: cartItemId })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Force the page to reload so the deleted item vanishes!
+                    window.location.reload();
+                } else {
+                    alert("Oops! Could not remove the item: " + result.message);
+                }
+            } catch (error) {
+                console.error("Error removing item:", error);
+            }
+        }
     </script>
 
 </body>

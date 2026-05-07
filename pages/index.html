@@ -17,7 +17,7 @@
         </a>
         
         <ul class="nav-links">
-            <li><a href="/pages/spaces.html">Spaces</a></li>
+            <li><a href="/spaces">Spaces</a></li>
             <li><a href="/bookstore">Bookshelf</a></li>
         </ul>
 
@@ -42,7 +42,7 @@
         <p>Toss the boring portals.<br>Connect with classmates, crush your exams, buy required books, and actually enjoy learning again.</p>
         <br>
         <div class="hero-buttons">
-            <button onclick="window.location.href='/pages/spaces.html'" class="btn-primary btn-large">Explore Classes 🚀</button>
+            <button onclick="window.location.href='/spaces'" class="btn-primary btn-large">Explore Classes 🚀</button>
             <button onclick="window.location.href='/bookstore'" class="btn-secondary">⭐ See what's hot</button>
         </div>
 
@@ -74,7 +74,7 @@
 
         <div class="features-grid">
             
-            <a href="/pages/spaces.html" class="feature-card card-yellow">
+            <a href="/spaces" class="feature-card card-yellow">
                 <div class="card-icon">📖</div>
                 <div class="card-image-wrapper">
                     <img src="/images/course.jpg" alt="Course Hub" class="card-img">
@@ -85,7 +85,7 @@
                 </div>
             </a>
 
-            <a href="/pages/spaces.html" class="feature-card card-pink">
+            <a href="/spaces" class="feature-card card-pink">
                 <div class="card-icon">👥</div>
                 <div class="card-image-wrapper">
                     <img src="/images/student.jpg" alt="Spaces" class="card-img">
@@ -121,7 +121,7 @@
 
         <div class="tracker-header">
             <h2>Your Enrolled Classes ✨</h2>
-            <a href="/pages/spaces.html" class="see-all">Find more lectures →</a>
+            <a href="/spaces" class="see-all">Find more lectures →</a>
         </div>
 
         <div class="tracker-cards">
@@ -151,7 +151,7 @@
             {% else %}
                 <div style="padding: 40px; text-align: center; width: 100%; border: 2px dashed #eaeaea; border-radius: 20px;">
                     <h3>No classes yet! 🎥</h3>
-                    <button onclick="window.location.href='/pages/spaces.html'" class="btn-primary" style="margin-top: 15px;">Browse Spaces</button>
+                    <button onclick="window.location.href='/spaces'" class="btn-primary" style="margin-top: 15px;">Browse Spaces</button>
                 </div>
             {% endif %}
         </div>
@@ -207,7 +207,7 @@
                 <div class="link-column">
                     <h4>Platform</h4>
                     <ul>
-                        <li><a href="/pages/spaces.html">Spaces</a></li>
+                        <li><a href="/spaces">Spaces</a></li>
                         <li><a href="/bookstore">Bookshelf</a></li>
                     </ul>
                 </div>
@@ -288,7 +288,7 @@
                 <span>Total:</span>
                 <span>RM {{ cart_total | default('0.00') }}</span>
             </div>
-            <button onclick="window.location.href='/pages/checkout.html'" class="btn-primary btn-full">Secure Checkout 🔒</button>
+            <button onclick="window.location.href='/checkout'" class="btn-primary btn-full">Secure Checkout 🔒</button>
         </div>
     </div> <script>
         document.addEventListener("DOMContentLoaded", function() {

@@ -20,12 +20,13 @@
         </a>
         
         <ul class="nav-links">
-            <li><a href="/pages/spaces.html">Spaces</a></li>
+            <li><a href="/spaces">Spaces</a></li>
             <li><a href="/bookstore">Bookshelf</a></li>
         </ul>
 
         <div class="nav-actions">
-            <button class="cart-btn" id="cart-toggle">🛍️ <span class="cart-badge" id="cart-count">0</span></button>
+            <!-- 1. The Badge updates with the initial Nunjucks load -->
+            <button class="cart-btn" id="cart-toggle">🛍️ <span class="cart-badge" id="cart-count">{{ cart_count | default('0') }}</span></button>
             <a href="/#course-tracker" class="btn-primary">My Dashboard</a>
         </div>
     </nav>
@@ -35,7 +36,6 @@
             <h2>Campus Shop 📚</h2>
             <p>Textbooks, gear, and more.</p>
             
-            <!-- 1. FIXED SEARCH FORM -->
             <form action="/search" method="GET" class="search-bar">
                 <input type="text" name="query" placeholder="Search by title, author, or course code..." class="search-input" required>
                 <button type="submit" class="btn-primary">Search</button>
@@ -44,16 +44,12 @@
 
         <div class="book-grid">
             
-            <!-- 2. THE DYNAMIC DATABASE LOOP (NUNJUCKS VERSION) -->
             {% if books and books.length > 0 %}
                 {% set colors = ['card-mint', 'card-pink', 'card-yellow', 'card-blue'] %}
                 
                 {% for book in books %}
-                    
-                    <!-- Automatically cycle through the 4 colors -->
                     <div class="book-card {{ colors[loop.index0 % 4] }}">
                         <div class="book-image-wrapper">
-                            <!-- Uses the image from DB, or a fallback if blank -->
                             <img src="{{ book.image_url or '../images/books/biology-placeholder.jpg' }}" alt="{{ book.title }}" class="book-img">
                         </div>
                         <div class="book-details">
@@ -65,76 +61,21 @@
                             </div>
                         </div>
                     </div>
-
                 {% endfor %}
                 
             {% else %}
-                <!-- What shows up if the search finds nothing -->
                 <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
                     <h3>No books found! 🕵️‍♀️</h3>
                     <p>Try searching for a different title or author.</p>
-                    <a href="/books" class="btn-primary" style="display: inline-block; margin-top: 15px;">Clear Search</a>
+                    <a href="/bookstore" class="btn-primary" style="display: inline-block; margin-top: 15px;">Clear Search</a>
                 </div>
             {% endif %}
 
         </div>
     </section>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        const badge = document.getElementById("cart-count");
-        const addToCartButtons = document.querySelectorAll(".add-to-cart-btn");
-
-        addToCartButtons.forEach(button => {
-            button.addEventListener("click", async function() {
-                
-                // 1. Grab the secret book ID from the button we clicked
-                const bookId = this.getAttribute("data-book-id");
-
-                try {
-                    // 2. Send a POST request to the route already inside your server.js!
-                    const response = await fetch('/api/cart/add', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        // We pack the ID into a JSON box and send it over
-                        body: JSON.stringify({ book_id: bookId }) 
-                    });
-
-                    // 3. Wait for the server's reply
-                    const result = await response.json();
-
-                    // 4. If the database successfully saved it...
-                    if (result.success) {
-                        // Update the badge with the REAL database count!
-                        badge.textContent = result.new_cart_total;
-                        badge.style.display = "block"; 
-                        
-                        // Simple pop animation on click
-                        this.style.transform = "scale(0.9)";
-                        setTimeout(() => {
-                            this.style.transform = "scale(1)";
-                        }, 100);
-                        
-                    } else {
-                        // If it fails (like if they aren't logged in)
-                        alert(result.message);
-                        if (result.message === "Please log in first") {
-                            window.location.href = "/login"; // Send them to login page
-                        }
-                    }
-                    
-                } catch (error) {
-                    console.error("🚨 Cart Error:", error);
-                    alert("Something went wrong connecting to the server.");
-                }
-            });
-        });
-    });
-</script>
-
-<div class="cart-overlay" id="cart-overlay"></div>
+    <!-- THE CART DRAWER (POPUP) -->
+    <div class="cart-overlay" id="cart-overlay"></div>
     
     <div class="cart-drawer" id="cart-drawer">
         <div class="cart-header">
@@ -143,48 +84,67 @@
         </div>
 
         <div class="cart-items-container">
-            <div class="cart-item">
-                <img src="/images/calculus.jpg" alt="Book" class="cart-item-img">
-                <div class="cart-item-info">
-                    <span class="cart-item-title">Calculus 101: Advanced Methods</span>
-                    <span class="cart-item-price">RM 45</span>
-                    <button class="remove-btn">Remove</button>
-                </div>
-            </div>
-
-            <div class="cart-item">
-                <img src="/images/business.jpg" alt="Book" class="cart-item-img">
-                <div class="cart-item-info">
-                    <span class="cart-item-title">Modern Business Ethics</span>
-                    <span class="cart-item-price">RM 35</span>
-                    <button class="remove-btn">Remove</button>
-                </div>
-            </div>
+            <!-- 2. DYNAMIC NUNJUCKS LOOP FOR THE CART ITEMS -->
+            {% if cart_items and cart_items.length > 0 %}
+                {% for item in cart_items %}
+                    <div class="cart-item">
+                        <img src="{{ item.books.image_url or '/images/placeholder.jpg' }}" alt="Book" class="cart-item-img">
+                        <div class="cart-item-info">
+                            <span class="cart-item-title">{{ item.books.title }}</span>
+                            <span class="cart-item-price">RM {{ item.books.price }}</span>
+                            <!-- 3. REMOVE BUTTON - Triggers the JavaScript below -->
+                            <button class="remove-btn" onclick="removeFromCart('{{ item.id }}')" style="color: #ff4757; background: transparent; border: none; font-weight: bold; cursor: pointer; padding: 0; margin-top: 5px;">Remove</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; padding: 30px; color: var(--text-muted);">Your cart is empty! ✨</p>
+            {% endif %}
         </div>
 
         <div class="cart-footer">
             <div class="cart-total">
                 <span>Total:</span>
-                <span>RM 80</span>
+                <span id="drawer-total-price">RM 0.00</span>
             </div>
-            <button onclick="window.location.href='/pages/checkout.html'" class="btn-primary btn-full">Secure Checkout 🔒</button>
+            <!-- FIXED CHECKOUT LINK -->
+            <button onclick="window.location.href='/checkout'" class="btn-primary btn-full">Secure Checkout 🔒</button>
         </div>
+
+        <!-- JAVASCRIPT FOR CART MATH -->
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                let drawerTotal = 0;
+                
+                // Nunjucks injects the prices into JavaScript for safe math
+                {% if cart_items and cart_items.length > 0 %}
+                    {% for item in cart_items %}
+                        drawerTotal += {{ item.books.price }};
+                    {% endfor %}
+                {% endif %}
+                
+                const totalDisplay = document.getElementById('drawer-total-price');
+                if (totalDisplay) {
+                    totalDisplay.textContent = 'RM ' + drawerTotal.toFixed(2);
+                }
+            });
+        </script>
     </div>
 
+    <!-- MAIN JAVASCRIPT LOGIC -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
+            // Cart Toggle Logic
             const cartToggleBtn = document.getElementById('cart-toggle');
             const cartDrawer = document.getElementById('cart-drawer');
             const cartOverlay = document.getElementById('cart-overlay');
             const closeCartBtn = document.getElementById('close-cart');
 
-            // Open the cart
             cartToggleBtn.addEventListener('click', () => {
                 cartDrawer.classList.add('active');
                 cartOverlay.classList.add('active');
             });
 
-            // Close the cart (by clicking the X or the dark background)
             closeCartBtn.addEventListener('click', () => {
                 cartDrawer.classList.remove('active');
                 cartOverlay.classList.remove('active');
@@ -194,7 +154,61 @@
                 cartDrawer.classList.remove('active');
                 cartOverlay.classList.remove('active');
             });
+
+            // Add to Cart Logic
+            const addToCartButtons = document.querySelectorAll(".add-to-cart-btn");
+
+            addToCartButtons.forEach(button => {
+                button.addEventListener("click", async function() {
+                    const bookId = this.getAttribute("data-book-id");
+
+                    try {
+                        const response = await fetch('/api/cart/add', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ book_id: bookId }) 
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            // MAGIC FIX: Force the page to reload so the new book appears in the drawer!
+                            window.location.reload(); 
+                        } else {
+                            alert(result.message);
+                            if (result.message === "Please log in first") {
+                                window.location.href = "/login"; 
+                            }
+                        }
+                    } catch (error) {
+                        console.error("🚨 Cart Error:", error);
+                        alert("Something went wrong connecting to the server.");
+                    }
+                });
+            });
         });
+
+        // 5. REMOVE FROM CART LOGIC
+        async function removeFromCart(cartItemId) {
+            try {
+                const response = await fetch('/api/cart/remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cart_item_id: cartItemId })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Force the page to reload so the deleted item vanishes!
+                    window.location.reload();
+                } else {
+                    alert("Oops! Could not remove the item: " + result.message);
+                }
+            } catch (error) {
+                console.error("Error removing item:", error);
+            }
+        }
     </script>
 
 </body>

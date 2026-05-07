@@ -15,9 +15,15 @@
             <span class="logo-text">StudyBuddies</span>
         </a>
         <ul class="nav-links">
-            <li><a href="/pages/spaces.html">Spaces</a></li>
+            <!-- FIXED ROUTING LINK HERE -->
+            <li><a href="/spaces">Spaces</a></li>
             <li><a href="/bookstore">Bookshelf</a></li>
         </ul>
+        <div class="nav-actions">
+            <!-- ADDED CART BUTTON BACK -->
+            <button class="cart-btn" id="cart-toggle">🛍️ <span class="cart-badge" id="cart-count">{{ cart_count | default('0') }}</span></button>
+            <a href="/#course-tracker" class="btn-primary">My Dashboard</a>
+        </div>
     </nav>
 
     <div class="store-container">
@@ -29,6 +35,7 @@
         <div class="book-grid">
             {% if videos and videos.length > 0 %}
                 {% for video in videos %}
+                <!-- Dynamic link to the video player -->
                 <a href="/video/{{ video.id }}" class="book-card" style="text-decoration: none; color: inherit;">
                     <div class="book-image-wrapper" style="background-image: url('{{ video.thumbnail_url }}'); background-size: cover; background-position: center; position: relative;">
                         <div class="play-btn-large" style="width: 50px; height: 50px; font-size: 1.2rem; margin: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">▶</div>
@@ -36,7 +43,7 @@
                     <div class="book-details">
                         <span class="category-tag" style="position: static; display: inline-block; margin-bottom: 10px; border: 1px solid #eaeaea;">{{ video.category }}</span>
                         <h3 class="book-title">{{ video.title }}</h3>
-                        <p style="color: var(--text-muted); font-size: 0.85rem;">By {{ video.instructor_name }}</p>
+                        <p style="color: var(--text-muted); font-size: 0.85rem;">By {{ video.instructor_name | default('Instructor') }}</p>
                     </div>
                 </a>
                 {% endfor %}
@@ -49,5 +56,74 @@
         </div>
     </div>
 
+    <!-- THE CART DRAWER & LOGIC -->
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-drawer" id="cart-drawer">
+        <div class="cart-header">
+            <h2>Your Cart 🛍️</h2>
+            <button class="close-cart-btn" id="close-cart">✕</button>
+        </div>
+        <div class="cart-items-container">
+            {% if cart_items and cart_items.length > 0 %}
+                {% for item in cart_items %}
+                    <div class="cart-item">
+                        <img src="{{ item.books.image_url or '/images/placeholder.jpg' }}" alt="Book" class="cart-item-img">
+                        <div class="cart-item-info">
+                            <span class="cart-item-title">{{ item.books.title }}</span>
+                            <span class="cart-item-price">RM {{ item.books.price }}</span>
+                            <button class="remove-btn" onclick="removeFromCart('{{ item.id }}')" style="color: #ff4757; background: transparent; border: none; font-weight: bold; cursor: pointer; padding: 0; margin-top: 5px;">Remove</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; padding: 30px; color: var(--text-muted);">Your cart is empty! ✨</p>
+            {% endif %}
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="drawer-total-price">RM 0.00</span>
+            </div>
+            <button onclick="window.location.href='/checkout'" class="btn-primary btn-full">Secure Checkout 🔒</button>
+        </div>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                let drawerTotal = 0;
+                {% if cart_items and cart_items.length > 0 %}
+                    {% for item in cart_items %}
+                        drawerTotal += {{ item.books.price }};
+                    {% endfor %}
+                {% endif %}
+                const totalDisplay = document.getElementById('drawer-total-price');
+                if (totalDisplay) totalDisplay.textContent = 'RM ' + drawerTotal.toFixed(2);
+            });
+        </script>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const cartToggleBtn = document.getElementById('cart-toggle');
+            const cartDrawer = document.getElementById('cart-drawer');
+            const cartOverlay = document.getElementById('cart-overlay');
+            const closeCartBtn = document.getElementById('close-cart');
+
+            cartToggleBtn.addEventListener('click', () => { cartDrawer.classList.add('active'); cartOverlay.classList.add('active'); });
+            closeCartBtn.addEventListener('click', () => { cartDrawer.classList.remove('active'); cartOverlay.classList.remove('active'); });
+            cartOverlay.addEventListener('click', () => { cartDrawer.classList.remove('active'); cartOverlay.classList.remove('active'); });
+        });
+
+        async function removeFromCart(cartItemId) {
+            try {
+                const response = await fetch('/api/cart/remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cart_item_id: cartItemId })
+                });
+                const result = await response.json();
+                if (result.success) window.location.reload();
+                else alert("Oops! Could not remove the item: " + result.message);
+            } catch (error) { console.error("Error removing item:", error); }
+        }
+    </script>
 </body>
 </html>

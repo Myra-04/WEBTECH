@@ -15,7 +15,8 @@
             <span class="logo-text">StudyBuddies</span>
         </a>
         <div class="nav-actions">
-            <button onclick="window.location.href='/pages/spaces.html'" class="btn-secondary">← Back to Spaces</button>
+            <button onclick="window.location.href='/spaces'" class="btn-secondary">← Back to Spaces</button>
+            <button class="cart-btn" id="cart-toggle">🛍️ <span class="cart-badge" id="cart-count">{{ cart_count | default('0') }}</span></button>
         </div>
     </nav>
 
@@ -23,12 +24,23 @@
         
         <div class="main-course-content">
             <div class="video-section">
+                
                 <div class="video-player-placeholder" style="background-color: #000; width: 100%; aspect-ratio: 16 / 9;">
-                    {% if video.video_url %}
+                    {% if video.embed_url %}
+                        <iframe width="100%" height="100%" 
+                                src="{{ video.embed_url }}" 
+                                title="{{ video.title }}" 
+                                frameborder="0" 
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                                allowfullscreen>
+                        </iframe>
+                    
+                    {% elif video.video_url %}
                         <video width="100%" height="100%" controls style="outline: none;">
                             <source src="{{ video.video_url }}" type="video/mp4">
                             Your browser does not support the video tag.
                         </video>
+                    
                     {% else %}
                         <div style="display: flex; height: 100%; align-items: center; justify-content: center;">
                             <p style="color: rgba(255,255,255,0.5);">Video is loading or unavailable...</p>
@@ -39,7 +51,7 @@
                 <div class="video-details">
                     <span class="category-tag" style="position: static; display: inline-block; margin-bottom: 10px; border: 1px solid #eaeaea;">{{ video.category | default('GENERAL') }}</span>
                     <h1 class="video-title">{{ video.title | default('Lecture Title Here') }}</h1>
-                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 10px;">{{ video.description | default('No description provided.') }}</p>
+                    <p style="color: var(--text-muted); font-size: 0.95rem; margin-top: 10px;">{{ video.summary | default('No description provided.') }}</p>
                 </div>
             </div>
 
@@ -65,13 +77,12 @@
                 <div style="margin-top: 20px;">
                     {% if comments and comments.length > 0 %}
                         {% for comment in comments %}
-                        <div class="discussion-post" style="background: var(--white); border: 2px solid #eaeaea; border-left: 4px solid var(--mint-green);">
+                        <div class="discussion-post" style="background: var(--white); border: 2px solid #eaeaea; border-left: 4px solid var(--mint-green); padding: 15px; margin-bottom: 10px; border-radius: 8px;">
                             <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 5px;">
-                                <div class="chat-avatar" style="width: 30px; height: 30px; font-size: 0.7rem;">{{ comment.user_initial }}</div>
-                                <strong>{{ comment.user_name }}</strong>
-                                <span style="font-size: 0.75rem; color: var(--text-muted);">{{ comment.time_posted }}</span>
+                                <div class="chat-avatar" style="width: 30px; height: 30px; font-size: 0.7rem;">{{ comment.profiles.full_name.substring(0,2) if comment.profiles else 'U' }}</div>
+                                <strong>{{ comment.profiles.full_name if comment.profiles else 'Anonymous' }}</strong>
                             </div>
-                            <p style="margin-left: 40px; color: var(--text-dark);">{{ comment.text }}</p>
+                            <p style="margin-left: 40px; color: var(--text-dark);">{{ comment.comment_text }}</p>
                         </div>
                         {% endfor %}
                     {% else %}
@@ -84,13 +95,7 @@
 
             <div id="tab-syllabus" class="tab-content" style="display: none;">
                 <h3 style="margin-bottom: 15px;">Downloadable Resources</h3>
-                {% if notes and notes.length > 0 %}
-                    {% for note in notes %}
-                        <a href="{{ note.file_url }}" download class="btn-secondary" style="display: inline-block; margin-bottom: 10px; text-decoration: none;">📄 {{ note.filename }}</a><br>
-                    {% endfor %}
-                {% else %}
-                    <p style="color: var(--text-muted);">The lecturer hasn't attached any notes for this video.</p>
-                {% endif %}
+                <p style="color: var(--text-muted);">The notes being attached with this video.</p>
             </div>
 
         </div>
@@ -100,9 +105,81 @@
         function switchTab(clickedElement, tabName) {
             document.querySelectorAll('.course-tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-            
             clickedElement.classList.add('active');
             document.getElementById('tab-' + tabName).style.display = 'block';
+        }
+    </script>
+
+    <div class="cart-overlay" id="cart-overlay"></div>
+    <div class="cart-drawer" id="cart-drawer">
+        <div class="cart-header">
+            <h2>Your Cart 🛍️</h2>
+            <button class="close-cart-btn" id="close-cart">✕</button>
+        </div>
+        <div class="cart-items-container">
+            {% if cart_items and cart_items.length > 0 %}
+                {% for item in cart_items %}
+                    <div class="cart-item">
+                        <img src="{{ item.books.image_url or '/images/placeholder.jpg' }}" alt="Book" class="cart-item-img">
+                        <div class="cart-item-info">
+                            <span class="cart-item-title">{{ item.books.title }}</span>
+                            <span class="cart-item-price">RM {{ item.books.price }}</span>
+                            <button class="remove-btn" onclick="removeFromCart('{{ item.id }}')" style="color: #ff4757; background: transparent; border: none; font-weight: bold; cursor: pointer; padding: 0; margin-top: 5px;">Remove</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; padding: 30px; color: var(--text-muted);">Your cart is empty! ✨</p>
+            {% endif %}
+        </div>
+        <div class="cart-footer">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span id="drawer-total-price">RM 0.00</span>
+            </div>
+            <button onclick="window.location.href='/checkout'" class="btn-primary btn-full">Secure Checkout 🔒</button>
+        </div>
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                let drawerTotal = 0;
+                try {
+                    {% if cart_items and cart_items.length > 0 %}
+                        {% for item in cart_items %}
+                            drawerTotal += {{ item.books.price }};
+                        {% endfor %}
+                    {% endif %}
+                } catch (error) {
+                    console.error("Cart error:", error);
+                }
+                const totalDisplay = document.getElementById('drawer-total-price');
+                if (totalDisplay) totalDisplay.textContent = 'RM ' + drawerTotal.toFixed(2);
+            });
+        </script>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const cartToggleBtn = document.getElementById('cart-toggle');
+            const cartDrawer = document.getElementById('cart-drawer');
+            const cartOverlay = document.getElementById('cart-overlay');
+            const closeCartBtn = document.getElementById('close-cart');
+
+            cartToggleBtn.addEventListener('click', () => { cartDrawer.classList.add('active'); cartOverlay.classList.add('active'); });
+            closeCartBtn.addEventListener('click', () => { cartDrawer.classList.remove('active'); cartOverlay.classList.remove('active'); });
+            cartOverlay.addEventListener('click', () => { cartDrawer.classList.remove('active'); cartOverlay.classList.remove('active'); });
+        });
+
+        async function removeFromCart(cartItemId) {
+            try {
+                const response = await fetch('/api/cart/remove', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ cart_item_id: cartItemId })
+                });
+                const result = await response.json();
+                if (result.success) window.location.reload();
+                else alert("Oops! Could not remove the item: " + result.message);
+            } catch (error) { console.error("Error removing item:", error); }
         }
     </script>
 </body>
