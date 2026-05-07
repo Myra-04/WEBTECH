@@ -31,14 +31,14 @@
             <div class="checkout-form-section">
                 
                 <h2 class="checkout-section-title">Delivery Details</h2>
-                <form class="auth-form" style="margin-bottom: 40px;">
+                <form class="auth-form" style="margin-bottom: 40px;" onsubmit="return false;">
                     <div class="input-group">
                         <label>Full Name</label>
                         <input type="text" placeholder="JT" required>
                     </div>
                     <div class="input-group">
                         <label>Campus Location / Block</label>
-                        <input type="text" placeholder="e.g. Block A, Room 214" required>
+                        <input type="text" id="delivery-location" placeholder="e.g. Block A, Room 214" required>
                     </div>
                     <div class="form-row">
                         <div class="input-group">
@@ -47,7 +47,7 @@
                         </div>
                         <div class="input-group">
                             <label>Phone Number</label>
-                            <input type="tel" placeholder="01X-XXX XXXX" required>
+                            <input type="tel" id="phone-number" placeholder="01X-XXX XXXX" required>
                         </div>
                     </div>
                 </form>
@@ -63,7 +63,7 @@
                     </div>
                 </div>
 
-                <form class="auth-form">
+                <form class="auth-form" onsubmit="return false;">
                     <div class="input-group">
                         <label>Card Number</label>
                         <input type="text" placeholder="0000 0000 0000 0000" required>
@@ -89,8 +89,8 @@
                     {% if cart_items and cart_items.length > 0 %}
                         {% for item in cart_items %}
                         <div class="summary-item">
-                            <span class="summary-item-title">{{ item.title }}</span>
-                            <span class="summary-item-price">RM {{ item.price }}</span>
+                            <span class="summary-item-title">{{ item.books.title }}</span>
+                            <span class="summary-item-price">RM {{ item.books.price }}</span>
                         </div>
                         {% endfor %}
                     {% else %}
@@ -118,7 +118,7 @@
                         <span>RM {{ final_total | default('0.00') }}</span>
                     </div>
 
-                    <button class="btn-primary btn-full btn-large" onclick="processCheckout()">Confirm Payment RM {{ final_total | default('0.00') }}</button>
+                    <button class="btn-primary btn-full btn-large" onclick="processCheckout('{{ final_total | default('0.00') }}')">Confirm Payment RM {{ final_total | default('0.00') }}</button>
 
                     <div class="secure-badge">
                         🔒 Payments are secure and encrypted
@@ -141,15 +141,45 @@
             clickedCard.classList.add('active');
         }
 
-        // The Checkout Animation & Redirect Logic
-        function processCheckout() {
-            // 1. Show the beautiful modal
-            document.getElementById('success-modal').classList.add('active');
-            
-            // 2. Wait exactly 3 seconds, then redirect them to the dashboard!
-            setTimeout(() => {
-                window.location.href = '/#dashboard'; // Sends them back home
-            }, 3000); 
+        // REAL Backend Communication Logic
+        async function processCheckout(totalAmount) {
+            // 1. Grab the user's typed data from the form
+            const locationInput = document.getElementById('delivery-location').value;
+            const phoneInput = document.getElementById('phone-number').value;
+
+            // Optional: You could add validation here (e.g., if (!locationInput) return alert("Enter location!");)
+
+            try {
+                // 2. Shoot the data over to server.js!
+                const response = await fetch('/api/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        location: locationInput, 
+                        phone: phoneInput, 
+                        total_amount: totalAmount 
+                    })
+                });
+
+                const result = await response.json();
+
+                // 3. Check if the server successfully saved everything to the database
+                if (result.success) {
+                    // Show the beautiful modal
+                    document.getElementById('success-modal').classList.add('active');
+                    
+                    // Wait exactly 3 seconds, then redirect to the dashboard!
+                    setTimeout(() => {
+                        window.location.href = '/'; 
+                    }, 3000); 
+                } else {
+                    // If Supabase failed (like a missing table), show the error!
+                    alert("Checkout Failed: " + result.message);
+                }
+            } catch (error) {
+                console.error("Error connecting to server:", error);
+                alert("Something went wrong connecting to the server. Check your terminal!");
+            }
         }
     </script>
 </body>

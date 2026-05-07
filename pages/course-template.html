@@ -27,7 +27,7 @@
                 
                 <div class="video-player-placeholder" style="background-color: #000; width: 100%; aspect-ratio: 16 / 9;">
                     {% if video.embed_url %}
-                        <iframe width="100%" height="100%" 
+                        <iframe id="youtube-player" width="100%" height="100%" 
                                 src="{{ video.embed_url }}" 
                                 title="{{ video.title }}" 
                                 frameborder="0" 
@@ -79,8 +79,15 @@
                         {% for comment in comments %}
                         <div class="discussion-post" style="background: var(--white); border: 2px solid #eaeaea; border-left: 4px solid var(--mint-green); padding: 15px; margin-bottom: 10px; border-radius: 8px;">
                             <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 5px;">
-                                <div class="chat-avatar" style="width: 30px; height: 30px; font-size: 0.7rem;">{{ comment.profiles.full_name.substring(0,2) if comment.profiles else 'U' }}</div>
-                                <strong>{{ comment.profiles.full_name if comment.profiles else 'Anonymous' }}</strong>
+                                
+                                {% if comment.profiles and comment.profiles.full_name %}
+                                    <div class="chat-avatar" style="width: 30px; height: 30px; font-size: 0.7rem;">{{ comment.profiles.full_name.slice(0, 2) }}</div>
+                                    <strong>{{ comment.profiles.full_name }}</strong>
+                                {% else %}
+                                    <div class="chat-avatar" style="width: 30px; height: 30px; font-size: 0.7rem;">U</div>
+                                    <strong>Anonymous Student</strong>
+                                {% endif %}
+
                             </div>
                             <p style="margin-left: 40px; color: var(--text-dark);">{{ comment.comment_text }}</p>
                         </div>
@@ -94,8 +101,39 @@
             </div>
 
             <div id="tab-syllabus" class="tab-content" style="display: none;">
-                <h3 style="margin-bottom: 15px;">Downloadable Resources</h3>
-                <p style="color: var(--text-muted);">The notes being attached with this video.</p>
+                
+                <div class="upload-section" style="background: var(--white); padding: 20px; border-radius: 8px; border: 1px solid #eaeaea; margin-bottom: 30px;">
+                    <h3 style="margin-bottom: 15px;">Share your notes</h3>
+                    
+                    <form action="/api/notes/upload" method="POST" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center;">
+                        <input type="hidden" name="video_id" value="{{ video.id }}">
+                        
+                        <input type="file" name="note_file" required style="border: 1px solid #ddd; padding: 10px; border-radius: 5px; flex-grow: 1;">
+                        
+                        <button type="submit" class="btn-primary">Upload Note 📄</button>
+                    </form>
+                </div>
+
+                <div class="notes-list">
+                    <h3 style="margin-bottom: 15px;">Community Notes</h3>
+                    
+                    {% if notes and notes.length > 0 %}
+                        {% for note in notes %}
+                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border: 1px solid #eaeaea; border-radius: 8px; margin-bottom: 10px; background: #fafafa;">
+                            
+                            <div style="display: flex; flex-direction: column;">
+                                <span style="font-weight: bold; color: var(--text-dark);">{{ note.file_name }}</span>
+                                <span style="font-size: 0.85rem; color: var(--text-muted);">Uploaded by: {{ note.profiles.full_name | default('Student') }}</span>
+                            </div>
+                            
+                            <a href="{{ note.file_url }}" target="_blank" download class="btn-secondary" style="text-decoration: none;">⬇️ Download</a>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p style="color: var(--text-muted); font-style: italic;">No notes have been shared for this lecture yet. Be the first!</p>
+                    {% endif %}
+                </div>
+
             </div>
 
         </div>
@@ -180,6 +218,84 @@
                 if (result.success) window.location.reload();
                 else alert("Oops! Could not remove the item: " + result.message);
             } catch (error) { console.error("Error removing item:", error); }
+        }
+    </script>
+
+    <script src="https://www.youtube.com/iframe_api"></script>
+    <script>
+        let ytPlayer;
+        let progressInterval;
+        const videoId = "{{ video.id }}";
+        
+        // 👈 Catch the saved progress from the server (defaults to 0 if new)
+        const savedPercentage = {{ saved_progress | default(0) }}; 
+        let hasSeeked = false; // A lock so it only jumps forward once!
+
+        // 1. When the YouTube API is ready, attach it to our iframe!
+        function onYouTubeIframeAPIReady() {
+            const iframe = document.getElementById('youtube-player');
+            if (iframe) {
+                ytPlayer = new YT.Player(iframe, {
+                    events: {
+                        'onStateChange': onPlayerStateChange
+                    }
+                });
+            }
+        }
+
+        // 2. Listen for when the user hits PLAY or PAUSE
+        function onPlayerStateChange(event) {
+            
+            // 👈 NEW FIX: The exact millisecond they hit "Play", jump to their saved spot!
+            if (event.data == YT.PlayerState.PLAYING && !hasSeeked && savedPercentage > 0) {
+                const totalTime = ytPlayer.getDuration();
+                const secondsToJumpTo = (savedPercentage / 100) * totalTime;
+                
+                // Jump to the exact second! (true means allow it to skip ahead)
+                ytPlayer.seekTo(secondsToJumpTo, true);
+                console.log("🚀 Resuming video at " + secondsToJumpTo + " seconds!");
+                
+                hasSeeked = true; // Lock it so it doesn't jump again if they restart the video
+            }
+
+            if (event.data == YT.PlayerState.PLAYING) {
+                // If playing, check the time every 5 seconds
+                progressInterval = setInterval(saveProgress, 5000);
+            } else {
+                // If paused or ended, stop checking the time, but save the final spot!
+                clearInterval(progressInterval);
+                saveProgress();
+            }
+        }
+
+        // 3. Calculate the percentage and send it to server.js
+        async function saveProgress() {
+            if (!ytPlayer || !ytPlayer.getDuration) return;
+
+            const currentTime = ytPlayer.getCurrentTime();
+            const totalTime = ytPlayer.getDuration();
+            
+            // Math to get percentage (e.g., 50%)
+            let percentage = Math.round((currentTime / totalTime) * 100);
+            
+            // YouTube sometimes goes slightly over, cap it at 100
+            if (percentage > 100) percentage = 100;
+
+            console.log("Tracking Watch Time: " + percentage + "%");
+
+            // Send it to your database quietly in the background!
+            try {
+                await fetch('/api/video/progress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        video_id: videoId,
+                        progress: percentage
+                    })
+                });
+            } catch (err) {
+                console.error("Failed to save progress", err);
+            }
         }
     </script>
 </body>

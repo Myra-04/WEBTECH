@@ -3,6 +3,7 @@ const session = require('express-session');
 const nunjucks = require('nunjucks');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
+const multer = require('multer'); // ADDED: Required for handling file uploads
 
 const app = express();
 
@@ -17,6 +18,9 @@ app.use(session({
     resave: false,
     saveUninitialized: true
 }));
+
+// ADDED: Setup Multer to store the uploaded file in memory temporarily
+const upload = multer({ storage: multer.memoryStorage() });
 
 // This tells Nunjucks to look in both the main folder AND the 'pages' folder
 nunjucks.configure([__dirname, path.join(__dirname, 'pages')], { autoescape: true, express: app });
@@ -53,17 +57,19 @@ app.get('/', async (req, res) => {
     const isLoggedIn = !!userId;
     
     let semesterStatus = "🌴 Semester Break! Relax and recharge.";
-    let userPurchasedBooks = []; // Updated for the new May requirements
+    let userPurchasedBooks = []; 
+    let activeCourses = []; 
     
     let userUniversity = "Guest";
     let userName = "Student";
     let userEmail = "";
 
     if (isLoggedIn) {
+        // Get user profile
         const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).single();
         
         if (profile) {
-            userUniversity = profile.university;
+            userUniversity = profile.university || "Guest";
             userName = profile.full_name; 
             userEmail = profile.email;    
         }
@@ -77,13 +83,37 @@ app.get('/', async (req, res) => {
             semesterStatus = "🔥 February Semester is live!";
         }
 
-        // Fetch the user's permanent digital bookshelf!
+        // 1. Fetch the user's permanent digital bookshelf
         const { data: pBooks } = await supabase
             .from('purchased_books')
             .select('*, books(*)')
             .eq('user_id', userId);
             
         if (pBooks) userPurchasedBooks = pBooks;
+
+        // 2. Fetch the user's watched videos
+        const { data: progressData, error: progressError } = await supabase
+            .from('video_progress')
+            .select('*, videos(*)')
+            .eq('user_id', userId);
+            
+        if (progressError) {
+            console.error("🚨 Error fetching progress:", progressError.message);
+        }
+
+        // 3. Format the videos so the HTML can easily read them
+        if (progressData) {
+            activeCourses = progressData.map(p => {
+                const ytId = getYouTubeId(p.videos?.video_url);
+                return {
+                    id: p.video_id,
+                    title: p.videos?.title || 'Unknown Video',
+                    category: p.videos?.category || 'GENERAL',
+                    thumbnail_url: ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : '/images/placeholder.jpg',
+                    progress_percentage: p.progress
+                };
+            });
+        }
     }
     
     res.render('index', { 
@@ -91,7 +121,8 @@ app.get('/', async (req, res) => {
         cart_items: await getCartItems(userId), 
         is_logged_in: isLoggedIn, 
         semester_status: semesterStatus,
-        purchased_books: userPurchasedBooks, // Sends purchased books instead of courses
+        purchased_books: userPurchasedBooks, 
+        courses: activeCourses,
         university: userUniversity,
         user_name: userName,        
         user_email: userEmail       
@@ -99,7 +130,6 @@ app.get('/', async (req, res) => {
 });
 
 // --- NEW ROUTE: COURSE TEMPLATE ---
-// This allows you to go to http://localhost:3000/course
 app.get('/course', async (req, res) => {
     const userId = req.session.userId;
     res.render('course-template', {
@@ -119,7 +149,6 @@ app.get('/spaces', async (req, res) => {
         videos.forEach(video => {
             const ytId = getYouTubeId(video.video_url);
             if (ytId) {
-                // Generates the official high-quality YouTube thumbnail
                 video.thumbnail_url = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
             }
         });
@@ -133,18 +162,17 @@ app.get('/spaces', async (req, res) => {
     });
 });
 
-// --- NEW ROUTE: DYNAMIC VIDEO PLAYER & Q&A ---
+// --- NEW ROUTE: DYNAMIC VIDEO PLAYER, Q&A, AND NOTES ---
 app.get('/video/:id', async (req, res) => {
     const userId = req.session.userId;
     const videoId = req.params.id;
 
     const { data: video } = await supabase.from('videos').select('*').eq('id', videoId).single();
     
-    // Convert the standard YouTube link into a playable Embed link
     if (video && video.video_url) {
         const ytId = getYouTubeId(video.video_url);
         if (ytId) {
-            video.embed_url = `https://www.youtube.com/embed/${ytId}`;
+            video.embed_url = `https://www.youtube.com/embed/${ytId}?enablejsapi=1&origin=http://localhost:3000`;
         }
     }
 
@@ -154,12 +182,35 @@ app.get('/video/:id', async (req, res) => {
         .eq('video_id', videoId)
         .order('created_at', { ascending: true });
 
+    const { data: notes } = await supabase
+        .from('notes')
+        .select('*, profiles(full_name)')
+        .eq('video_id', videoId)
+        .order('created_at', { ascending: false });
+
+    // 👈 NEW FIX: Check if the user has watched this before and grab their percentage!
+    let savedProgress = 0;
+    if (userId) {
+        const { data: progressData } = await supabase
+            .from('video_progress')
+            .select('progress')
+            .eq('user_id', userId)
+            .eq('video_id', videoId)
+            .single();
+        
+        if (progressData) {
+            savedProgress = progressData.progress;
+        }
+    }
+
     res.render('course-template', { 
         video: video,
         comments: comments || [],
+        notes: notes || [],
         cart_count: await getCartCount(userId),
         cart_items: await getCartItems(userId),
-        is_logged_in: !!userId
+        is_logged_in: !!userId,
+        saved_progress: savedProgress // 👈 Hand the percentage over to the HTML
     });
 });
 
@@ -267,54 +318,189 @@ app.get('/checkout', async (req, res) => {
     });
 });
 
-// --- CHECKOUT PROCESSING API (UPDATED FOR DIGITAL BOOKSHELF) ---
+// --- CHECKOUT PROCESSING API (WITH EXTREME DEBUGGING) ---
 app.post('/api/checkout', async (req, res) => {
     const userId = req.session.userId;
     const { location, phone, total_amount } = req.body;
 
     if (!userId) return res.status(401).json({ success: false, message: "Not logged in" });
 
-    const cartItems = await getCartItems(userId);
-    if (!cartItems || cartItems.length === 0) return res.status(400).json({ success: false, message: "Cart is empty" });
+    try {
+        console.log("-----------------------------------------");
+        console.log("🛒 Checkout started for user:", userId);
 
-    const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert([{ 
-            user_id: userId, 
-            total_amount: total_amount,
-            delivery_location: location,
-            phone_number: phone,
-            status: 'completed'
-        }])
-        .select() 
-        .single();
+        const cartItems = await getCartItems(userId);
+        if (!cartItems || cartItems.length === 0) {
+            console.log("❌ Checkout failed: Cart is empty.");
+            return res.status(400).json({ success: false, message: "Cart is empty" });
+        }
 
-    if (orderError) return res.status(500).json({ success: false, message: "Failed to create order." });
+        console.log("📦 1. Attempting to create Order in 'orders' table...");
+        const { data: orderData, error: orderError } = await supabase
+            .from('orders')
+            .insert([{ 
+                user_id: userId, 
+                total_amount: total_amount ? parseFloat(total_amount) : 0, 
+                delivery_location: location || 'Digital Delivery',
+                phone_number: phone || 'N/A',
+                status: 'completed'
+            }])
+            .select() 
+            .single();
 
-    const orderItemsToInsert = cartItems.map(item => ({
-        order_id: orderData.id,
-        book_id: item.book_id,
-        price_at_purchase: item.books.price
-    }));
-    await supabase.from('order_items').insert(orderItemsToInsert);
+        if (orderError) {
+            console.log("🚨 ERROR IN 'orders' TABLE:", orderError.message);
+            return res.status(500).json({ success: false, message: "Failed to create order." });
+        }
 
-    // NEW LOGIC: Move items to the permanent Digital Bookshelf!
-    const purchasedBooksToInsert = cartItems.map(item => ({
-        user_id: userId,
-        book_id: item.book_id
-    }));
-    await supabase.from('purchased_books').insert(purchasedBooksToInsert);
+        console.log("🧾 2. Attempting to save items to 'order_items' table...");
+        const orderItemsToInsert = cartItems.map(item => ({
+            order_id: orderData.id,
+            book_id: item.book_id,
+            price_at_purchase: item.books.price
+        }));
+        const { error: itemsError } = await supabase.from('order_items').insert(orderItemsToInsert);
 
-    // Clear the user's temporary cart
-    await supabase.from('cart_items').delete().eq('user_id', userId);
+        if (itemsError) {
+            console.log("🚨 ERROR IN 'order_items' TABLE:", itemsError.message);
+            return res.status(500).json({ success: false, message: "Failed to save items." });
+        }
 
-    res.json({ success: true, message: "Order placed! Books added to your digital bookshelf." });
+        console.log("📚 3. Attempting to add books to 'purchased_books' table...");
+        const purchasedBooksToInsert = cartItems.map(item => ({
+            user_id: userId,
+            book_id: item.book_id
+        }));
+        const { error: pbError } = await supabase.from('purchased_books').insert(purchasedBooksToInsert);
+
+        if (pbError) {
+            console.log("🚨 ERROR IN 'purchased_books' TABLE:", pbError.message);
+            return res.status(500).json({ success: false, message: "Failed to add to digital shelf." });
+        }
+
+        console.log("🗑️ 4. Attempting to clear the cart...");
+        const { error: clearError } = await supabase.from('cart_items').delete().eq('user_id', userId);
+
+        if (clearError) {
+            console.log("🚨 ERROR CLEARING CART:", clearError.message);
+        }
+
+        console.log("✅ CHECKOUT 100% COMPLETE!");
+        console.log("-----------------------------------------");
+        res.json({ success: true, message: "Order placed! Books added to your digital bookshelf." });
+
+    } catch (err) {
+        console.log("🚨 CRITICAL SERVER CRASH:", err);
+        res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+
+// --- NEW API: ADD A COMMENT ---
+app.post('/api/comments/add', async (req, res) => {
+    const userId = req.session.userId;
+    const { video_id, comment_text } = req.body;
+
+    if (!userId) return res.redirect('/login');
+
+    const { error } = await supabase.from('comments').insert([
+        { video_id: video_id, user_id: userId, comment_text: comment_text }
+    ]);
+
+    if (error) console.error("🚨 Comment Error:", error.message);
+    res.redirect(`/video/${video_id}`);
+});
+
+// --- NEW API: UPLOAD NOTES TO SUPABASE STORAGE ---
+app.post('/api/notes/upload', upload.single('note_file'), async (req, res) => {
+    const userId = req.session.userId;
+    const videoId = req.body.video_id;
+    const file = req.file; 
+
+    if (!userId) return res.redirect('/login');
+    if (!file) return res.status(400).send("Please select a file.");
+
+    try {
+        const uniqueFileName = `${Date.now()}_${file.originalname.replace(/[^a-zA-Z0-9.]/g, "_")}`;
+
+        const { error: storageError } = await supabase.storage
+            .from('course_notes')
+            .upload(uniqueFileName, file.buffer, {
+                contentType: file.mimetype
+            });
+
+        if (storageError) throw storageError;
+
+        const { data: publicUrlData } = supabase.storage
+            .from('course_notes')
+            .getPublicUrl(uniqueFileName);
+        
+        const fileUrl = publicUrlData.publicUrl;
+
+        await supabase.from('notes').insert([
+            { video_id: videoId, user_id: userId, file_name: file.originalname, file_url: fileUrl }
+        ]);
+
+        res.redirect(`/video/${videoId}`);
+    } catch (error) {
+        console.error("Upload Error:", error.message);
+        res.status(500).send("Failed to upload note.");
+    }
+});
+
+// --- NEW API: SAVE VIDEO PROGRESS (WITH EXTREME DEBUGGING) ---
+app.post('/api/video/progress', async (req, res) => {
+    console.log("-----------------------------------------");
+    console.log("📡 Progress Signal Received from HTML!");
+    
+    const userId = req.session.userId;
+    const { video_id, progress } = req.body;
+
+    console.log("User ID:", userId);
+    console.log("Video ID:", video_id);
+    console.log("Progress:", progress + "%");
+
+    if (!userId) {
+        console.log("❌ Failed: The server thinks you are not logged in.");
+        return res.status(401).json({ success: false });
+    }
+
+    try {
+        // Check if the user already started this video
+        const { data: existing, error: fetchError } = await supabase
+            .from('video_progress')
+            .select('*')
+            .eq('user_id', userId)
+            .eq('video_id', video_id)
+            .single();
+
+        // Error code PGRST116 just means "0 rows found", which is normal for the first time!
+        if (fetchError && fetchError.code !== 'PGRST116') {
+            console.log("🚨 DATABASE FETCH ERROR:", fetchError.message);
+        }
+
+        if (existing) {
+            console.log("🔄 Found existing record! Updating...");
+            const { error: updateError } = await supabase.from('video_progress').update({ progress: progress }).eq('id', existing.id);
+            if (updateError) console.log("🚨 DATABASE UPDATE ERROR:", updateError.message);
+        } else {
+            console.log("🆕 First time watching! Inserting new record...");
+            const { error: insertError } = await supabase.from('video_progress').insert([{ user_id: userId, video_id: video_id, progress: progress }]);
+            if (insertError) console.log("🚨 DATABASE INSERT ERROR:", insertError.message);
+        }
+
+        console.log("✅ Checkpoint Saved!");
+        console.log("-----------------------------------------");
+        res.json({ success: true });
+    } catch (err) {
+        console.log("🚨 CRITICAL SERVER ERROR:", err.message);
+        res.status(500).json({ success: false });
+    }
 });
 
 // --- AUTHENTICATION (STUDENT PORTAL & SMART ROUTING) ---
 app.get('/login', async (req, res) => {
     const userId = req.session.userId;
-    if (userId) return res.redirect('/#course-tracker'); 
+    if (userId) return res.redirect('/#dashboard'); 
     
     res.render('student-portal', {
         cart_count: await getCartCount(userId),
@@ -324,7 +510,7 @@ app.get('/login', async (req, res) => {
 
 app.get('/register', async (req, res) => {
     const userId = req.session.userId;
-    if (userId) return res.redirect('/#course-tracker');
+    if (userId) return res.redirect('/#dashboard');
     
     res.render('student-portal', {
         cart_count: await getCartCount(userId),
@@ -351,7 +537,7 @@ app.post('/register', async (req, res) => {
         req.session.userId = data.user.id;
     }
     
-    res.redirect('/#course-tracker');
+    res.redirect('/#dashboard');
 });
 
 app.post('/login', async (req, res) => {
@@ -365,7 +551,7 @@ app.post('/login', async (req, res) => {
     }
 
     req.session.userId = data.user.id;
-    res.redirect('/#course-tracker');
+    res.redirect('/#dashboard');
 });
 
 app.get('/logout', (req, res) => {
