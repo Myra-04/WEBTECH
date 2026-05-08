@@ -35,7 +35,6 @@
         <div class="book-grid">
             {% if videos and videos.length > 0 %}
                 {% for video in videos %}
-                <!-- Dynamic link to the video player -->
                 <a href="/video/{{ video.id }}" class="book-card" style="text-decoration: none; color: inherit;">
                     <div class="book-image-wrapper" style="background-image: url('{{ video.thumbnail_url }}'); background-size: cover; background-position: center; position: relative;">
                         <div class="play-btn-large" style="width: 50px; height: 50px; font-size: 1.2rem; margin: auto; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">▶</div>

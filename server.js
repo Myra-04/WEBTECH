@@ -1,11 +1,11 @@
 const express = require('express');
+const app = express();
 const session = require('express-session');
 const nunjucks = require('nunjucks');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
-const multer = require('multer'); // ADDED: Required for handling file uploads
+const multer = require('multer'); 
 
-const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -559,4 +559,8 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-app.listen(3000, () => console.log('🚀 Server running on http://localhost:3000'));
+// --- SERVER PORT LISTENER ---
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+});
