@@ -166,7 +166,7 @@
             <a href="/bookstore" class="see-all">Shop for more →</a>
         </div>
 
-        <div class="book-grid">
+<div class="book-grid">
             {% if purchased_books and purchased_books.length > 0 %}
                 {% for book in purchased_books %}
                 <div class="book-card" style="border: 2px solid #eaeaea;">
@@ -176,8 +176,8 @@
                     <div class="book-details">
                         <span class="category-tag" style="position: static; display: inline-block; margin-bottom: 10px; border: 1px solid #eaeaea;">{{ book.books.course_code }}</span>
                         <h3 class="book-title" style="margin-bottom: 5px;">{{ book.books.title }}</h3>
-                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">By {{ book.books.author }}</p>
-                        <button class="btn-secondary btn-full">Read eBook 📖</button>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">By {{ book.books.author }}</p>  
+                        <button onclick="window.location.href='{{ book.books.pdf_url }}'" class="btn-secondary btn-full">Read eBook 📖</button>
                     </div>
                 </div>
                 {% endfor %}
