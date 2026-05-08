@@ -9,6 +9,13 @@
 </head>
 <body>
 
+    <div style="background-color: #fff3cd; color: #856404; padding: 12px 20px; text-align: center; font-family: 'Inter', sans-serif; font-size: 0.95rem; border-bottom: 2px solid #ffeeba; display: flex; justify-content: center; align-items: center; gap: 10px;">
+        <span style="font-size: 1.2rem;">⚠️</span>
+        <span>
+            <strong>Developer Note:</strong> To test the video tracking features, you MUST run <code>node server.js</code> and open <strong>http://localhost:3000</strong> in a real web browser (Chrome/Edge). YouTube videos will <strong>not</strong> play inside the VS Code preview!
+        </span>
+    </div>
+
     <nav class="navbar">
         <a href="/" class="logo">
             <span class="logo-icon">✨</span>
@@ -77,9 +84,10 @@
                 <div style="margin-top: 20px;">
                     {% if comments and comments.length > 0 %}
                         {% for comment in comments %}
-                        <div class="discussion-post" style="background: var(--white); border: 2px solid #eaeaea; border-left: 4px solid var(--mint-green); padding: 15px; margin-bottom: 10px; border-radius: 8px;">
+                        
+                        <div class="discussion-post" style="background: var(--white); border: 2px solid #eaeaea; border-left: 4px solid var(--mint-green); padding: 15px; margin-bottom: 20px; border-radius: 8px;">
+                            
                             <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 5px;">
-                                
                                 {% if comment.profiles and comment.profiles.full_name %}
                                     <div class="chat-avatar" style="width: 30px; height: 30px; font-size: 0.7rem;">{{ comment.profiles.full_name.slice(0, 2) }}</div>
                                     <strong>{{ comment.profiles.full_name }}</strong>
@@ -87,9 +95,47 @@
                                     <div class="chat-avatar" style="width: 30px; height: 30px; font-size: 0.7rem;">U</div>
                                     <strong>Anonymous Student</strong>
                                 {% endif %}
-
                             </div>
-                            <p style="margin-left: 40px; color: var(--text-dark);">{{ comment.comment_text }}</p>
+                            
+                            <p style="margin-left: 40px; color: var(--text-dark); margin-bottom: 10px;">{{ comment.comment_text }}</p>
+                            
+                            <button onclick="toggleReplyForm('{{ comment.id }}')" style="margin-left: 40px; background: none; border: none; color: #7f8fa6; font-weight: bold; cursor: pointer; padding: 0;">💬 Reply</button>
+
+                            <div id="reply-box-{{ comment.id }}" style="display: none; margin-left: 40px; margin-top: 15px;">
+                                <form action="/api/comments/add" method="POST" style="display: flex; gap: 10px;">
+                                    <input type="hidden" name="video_id" value="{{ video.id }}">
+                                    <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                                    
+                                    <input type="text" name="comment_text" placeholder="Write a reply..." required style="flex-grow: 1; padding: 10px; border-radius: 8px; border: 1px solid #ddd;">
+                                    <button type="submit" class="btn-secondary" style="padding: 10px 15px;">Send</button>
+                                </form>
+                            </div>
+
+                            {% if comment.replies and comment.replies.length > 0 %}
+                                <div class="replies-container" style="margin-left: 40px; margin-top: 15px; border-left: 2px dashed #eaeaea; padding-left: 15px;">
+                                    {% for reply in comment.replies %}
+                                        <div style="margin-bottom: 15px;">
+                                            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 3px;">
+                                                
+                                                {% if reply.profiles and reply.profiles.full_name %}
+                                                    <div class="chat-avatar" style="width: 20px; height: 20px; font-size: 0.5rem; background: #dfe4ea; color: #2f3640;">
+                                                        {{ reply.profiles.full_name.slice(0, 2) }}
+                                                    </div>
+                                                    <strong style="font-size: 0.85rem;">{{ reply.profiles.full_name }}</strong>
+                                                {% else %}
+                                                    <div class="chat-avatar" style="width: 20px; height: 20px; font-size: 0.5rem; background: #dfe4ea; color: #2f3640;">
+                                                        U
+                                                    </div>
+                                                    <strong style="font-size: 0.85rem;">Anonymous Student</strong>
+                                                {% endif %}
+
+                                            </div>
+                                            <p style="margin-left: 28px; font-size: 0.9rem; color: #57606f;">{{ reply.comment_text }}</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+
                         </div>
                         {% endfor %}
                     {% else %}
@@ -145,6 +191,16 @@
             document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
             clickedElement.classList.add('active');
             document.getElementById('tab-' + tabName).style.display = 'block';
+        }
+
+        // 👈 NEW SCRIPT: Toggles the reply form open/closed!
+        function toggleReplyForm(commentId) {
+            const replyBox = document.getElementById('reply-box-' + commentId);
+            if (replyBox.style.display === 'none') {
+                replyBox.style.display = 'block';
+            } else {
+                replyBox.style.display = 'none';
+            }
         }
     </script>
 
@@ -226,12 +282,9 @@
         let ytPlayer;
         let progressInterval;
         const videoId = "{{ video.id }}";
-        
-        // 👈 Catch the saved progress from the server (defaults to 0 if new)
         const savedPercentage = {{ saved_progress | default(0) }}; 
-        let hasSeeked = false; // A lock so it only jumps forward once!
+        let hasSeeked = false; 
 
-        // 1. When the YouTube API is ready, attach it to our iframe!
         function onYouTubeIframeAPIReady() {
             const iframe = document.getElementById('youtube-player');
             if (iframe) {
@@ -243,47 +296,32 @@
             }
         }
 
-        // 2. Listen for when the user hits PLAY or PAUSE
         function onPlayerStateChange(event) {
-            
-            // 👈 NEW FIX: The exact millisecond they hit "Play", jump to their saved spot!
             if (event.data == YT.PlayerState.PLAYING && !hasSeeked && savedPercentage > 0) {
                 const totalTime = ytPlayer.getDuration();
                 const secondsToJumpTo = (savedPercentage / 100) * totalTime;
                 
-                // Jump to the exact second! (true means allow it to skip ahead)
                 ytPlayer.seekTo(secondsToJumpTo, true);
-                console.log("🚀 Resuming video at " + secondsToJumpTo + " seconds!");
-                
-                hasSeeked = true; // Lock it so it doesn't jump again if they restart the video
+                hasSeeked = true; 
             }
 
             if (event.data == YT.PlayerState.PLAYING) {
-                // If playing, check the time every 5 seconds
                 progressInterval = setInterval(saveProgress, 5000);
             } else {
-                // If paused or ended, stop checking the time, but save the final spot!
                 clearInterval(progressInterval);
                 saveProgress();
             }
         }
 
-        // 3. Calculate the percentage and send it to server.js
         async function saveProgress() {
             if (!ytPlayer || !ytPlayer.getDuration) return;
 
             const currentTime = ytPlayer.getCurrentTime();
             const totalTime = ytPlayer.getDuration();
             
-            // Math to get percentage (e.g., 50%)
             let percentage = Math.round((currentTime / totalTime) * 100);
-            
-            // YouTube sometimes goes slightly over, cap it at 100
             if (percentage > 100) percentage = 100;
 
-            console.log("Tracking Watch Time: " + percentage + "%");
-
-            // Send it to your database quietly in the background!
             try {
                 await fetch('/api/video/progress', {
                     method: 'POST',

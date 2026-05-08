@@ -19,10 +19,8 @@ app.use(session({
     saveUninitialized: true
 }));
 
-// ADDED: Setup Multer to store the uploaded file in memory temporarily
 const upload = multer({ storage: multer.memoryStorage() });
 
-// This tells Nunjucks to look in both the main folder AND the 'pages' folder
 nunjucks.configure([__dirname, path.join(__dirname, 'pages')], { autoescape: true, express: app });
 app.set('view engine', 'html');
 
@@ -31,7 +29,6 @@ const supabaseUrl = 'https://usnhssmiytegieslaweq.supabase.co';
 const supabaseKey = 'sb_publishable_Br9p9Kau2ObdnLnAC4Ku_w_3MAczbI5';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// --- HELPER: Get Cart Count ---
 async function getCartCount(userId) {
     if (!userId) return 0;
     const { count } = await supabase
@@ -41,7 +38,6 @@ async function getCartCount(userId) {
     return count || 0;
 }
 
-// --- HELPER: Get Cart Items with Book Details ---
 async function getCartItems(userId) {
     if (!userId) return null;
     const { data } = await supabase
@@ -65,7 +61,6 @@ app.get('/', async (req, res) => {
     let userEmail = "";
 
     if (isLoggedIn) {
-        // Get user profile
         const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).single();
         
         if (profile) {
@@ -83,7 +78,6 @@ app.get('/', async (req, res) => {
             semesterStatus = "🔥 February Semester is live!";
         }
 
-        // 1. Fetch the user's permanent digital bookshelf
         const { data: pBooks } = await supabase
             .from('purchased_books')
             .select('*, books(*)')
@@ -91,7 +85,6 @@ app.get('/', async (req, res) => {
             
         if (pBooks) userPurchasedBooks = pBooks;
 
-        // 2. Fetch the user's watched videos
         const { data: progressData, error: progressError } = await supabase
             .from('video_progress')
             .select('*, videos(*)')
@@ -101,7 +94,6 @@ app.get('/', async (req, res) => {
             console.error("🚨 Error fetching progress:", progressError.message);
         }
 
-        // 3. Format the videos so the HTML can easily read them
         if (progressData) {
             activeCourses = progressData.map(p => {
                 const ytId = getYouTubeId(p.videos?.video_url);
@@ -129,7 +121,6 @@ app.get('/', async (req, res) => {
     });
 });
 
-// --- NEW ROUTE: COURSE TEMPLATE ---
 app.get('/course', async (req, res) => {
     const userId = req.session.userId;
     res.render('course-template', {
@@ -139,12 +130,10 @@ app.get('/course', async (req, res) => {
     });
 });
 
-// --- NEW ROUTE: VIDEO SPACES GRID ---
 app.get('/spaces', async (req, res) => {
     const userId = req.session.userId;
     const { data: videos } = await supabase.from('videos').select('*');
     
-    // Auto-generate the thumbnail images for the grid!
     if (videos && videos.length > 0) {
         videos.forEach(video => {
             const ytId = getYouTubeId(video.video_url);
@@ -162,7 +151,7 @@ app.get('/spaces', async (req, res) => {
     });
 });
 
-// --- NEW ROUTE: DYNAMIC VIDEO PLAYER, Q&A, AND NOTES ---
+// --- NEW ROUTE: DYNAMIC VIDEO PLAYER, THREADED Q&A, AND NOTES ---
 app.get('/video/:id', async (req, res) => {
     const userId = req.session.userId;
     const videoId = req.params.id;
@@ -176,11 +165,21 @@ app.get('/video/:id', async (req, res) => {
         }
     }
 
-    const { data: comments } = await supabase
+    // 1. Fetch ALL comments for this video
+    const { data: allComments } = await supabase
         .from('comments')
         .select('*, profiles(full_name)') 
         .eq('video_id', videoId)
         .order('created_at', { ascending: true });
+
+    // 2. Sort them into Main Questions and Replies
+    let threadedComments = [];
+    if (allComments) {
+        threadedComments = allComments.filter(c => !c.parent_id);
+        threadedComments.forEach(parent => {
+            parent.replies = allComments.filter(c => c.parent_id === parent.id);
+        });
+    }
 
     const { data: notes } = await supabase
         .from('notes')
@@ -188,7 +187,6 @@ app.get('/video/:id', async (req, res) => {
         .eq('video_id', videoId)
         .order('created_at', { ascending: false });
 
-    // 👈 NEW FIX: Check if the user has watched this before and grab their percentage!
     let savedProgress = 0;
     if (userId) {
         const { data: progressData } = await supabase
@@ -205,12 +203,12 @@ app.get('/video/:id', async (req, res) => {
 
     res.render('course-template', { 
         video: video,
-        comments: comments || [],
+        comments: threadedComments || [], // 👈 Send the threaded sorted comments!
         notes: notes || [],
         cart_count: await getCartCount(userId),
         cart_items: await getCartItems(userId),
         is_logged_in: !!userId,
-        saved_progress: savedProgress // 👈 Hand the percentage over to the HTML
+        saved_progress: savedProgress 
     });
 });
 
@@ -221,7 +219,6 @@ function getYouTubeId(url) {
     return (match && match[2].length === 11) ? match[2] : null;
 }
 
-// --- BOOKSTORE (SEARCH & CURRENCY) ---
 app.get('/bookstore', async (req, res) => {
     const userId = req.session.userId;
     const { data: allBooks } = await supabase.from('books').select('*');
@@ -237,7 +234,6 @@ app.get('/search', async (req, res) => {
     const userId = req.session.userId;
     const searchQuery = req.query.query || '';
     
-    // FULL SEARCH: Checks Title, Author, and Course Code!
     const { data: searchResults, error } = await supabase
         .from('books')
         .select('*')
@@ -261,7 +257,6 @@ app.get('/search', async (req, res) => {
     });
 });
 
-// --- CART APIs (ADD & REMOVE) ---
 app.post('/api/cart/add', async (req, res) => {
     const userId = req.session.userId;
     if (!userId) return res.status(401).json({ success: false, message: "Please log in first" });
@@ -289,7 +284,6 @@ app.post('/api/cart/remove', async (req, res) => {
     res.json({ success: true });
 });
 
-// --- CHECKOUT PAGE ROUTE ---
 app.get('/checkout', async (req, res) => {
     const userId = req.session.userId;
     if (!userId) return res.redirect('/login');
@@ -318,7 +312,6 @@ app.get('/checkout', async (req, res) => {
     });
 });
 
-// --- CHECKOUT PROCESSING API (WITH EXTREME DEBUGGING) ---
 app.post('/api/checkout', async (req, res) => {
     const userId = req.session.userId;
     const { location, phone, total_amount } = req.body;
@@ -395,22 +388,24 @@ app.post('/api/checkout', async (req, res) => {
     }
 });
 
-// --- NEW API: ADD A COMMENT ---
+// --- UPDATED API: ADD A COMMENT OR REPLY ---
 app.post('/api/comments/add', async (req, res) => {
     const userId = req.session.userId;
-    const { video_id, comment_text } = req.body;
+    const { video_id, comment_text, parent_id } = req.body; // 👈 Now catches parent_id!
 
     if (!userId) return res.redirect('/login');
 
-    const { error } = await supabase.from('comments').insert([
-        { video_id: video_id, user_id: userId, comment_text: comment_text }
-    ]);
+    const insertData = { video_id: video_id, user_id: userId, comment_text: comment_text };
+    if (parent_id) {
+        insertData.parent_id = parent_id;
+    }
+
+    const { error } = await supabase.from('comments').insert([insertData]);
 
     if (error) console.error("🚨 Comment Error:", error.message);
     res.redirect(`/video/${video_id}`);
 });
 
-// --- NEW API: UPLOAD NOTES TO SUPABASE STORAGE ---
 app.post('/api/notes/upload', upload.single('note_file'), async (req, res) => {
     const userId = req.session.userId;
     const videoId = req.body.video_id;
@@ -447,7 +442,6 @@ app.post('/api/notes/upload', upload.single('note_file'), async (req, res) => {
     }
 });
 
-// --- NEW API: SAVE VIDEO PROGRESS (WITH EXTREME DEBUGGING) ---
 app.post('/api/video/progress', async (req, res) => {
     console.log("-----------------------------------------");
     console.log("📡 Progress Signal Received from HTML!");
@@ -465,7 +459,6 @@ app.post('/api/video/progress', async (req, res) => {
     }
 
     try {
-        // Check if the user already started this video
         const { data: existing, error: fetchError } = await supabase
             .from('video_progress')
             .select('*')
@@ -473,7 +466,6 @@ app.post('/api/video/progress', async (req, res) => {
             .eq('video_id', video_id)
             .single();
 
-        // Error code PGRST116 just means "0 rows found", which is normal for the first time!
         if (fetchError && fetchError.code !== 'PGRST116') {
             console.log("🚨 DATABASE FETCH ERROR:", fetchError.message);
         }
@@ -497,7 +489,6 @@ app.post('/api/video/progress', async (req, res) => {
     }
 });
 
-// --- AUTHENTICATION (STUDENT PORTAL & SMART ROUTING) ---
 app.get('/login', async (req, res) => {
     const userId = req.session.userId;
     if (userId) return res.redirect('/#dashboard'); 
