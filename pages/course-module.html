@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBuddies | Course Modules</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <span class="logo-icon">✨</span>
+            <span class="logo-text">StudyBuddies</span>
+        </a>
+        <div class="nav-actions">
+            <button onclick="window.location.href='/'" class="btn-secondary">← Back to Dashboard</button>
+        </div>
+    </nav>
+
+    <div style="max-width: 900px; margin: 40px auto; padding: 0 40px;">
+        
+        <div style="background: var(--white); padding: 40px; border-radius: 20px; border: 2px solid #eaeaea; margin-bottom: 40px;">
+            <span class="category-tag" style="border: 1px solid #eaeaea; margin-bottom: 10px; display: inline-block;">{{ course.category | default('Computer Science') }}</span>
+            <h1 style="font-size: 2rem; margin-bottom: 5px;">{{ course.title | default('Web Technology 101') }}</h1>
+            <p style="color: var(--text-muted); margin-bottom: 25px;">{{ course.description | default('Complete the slides and quizzes below to finish this course.') }}</p>
+            
+            <div class="overall-progress-wrapper">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 10px; font-weight: bold;">
+                    <span>Overall Course Completion</span>
+                    <span id="overall-percentage-text">0%</span>
+                </div>
+                <div style="background: var(--bg-color); height: 20px; border-radius: 10px; overflow: hidden; border: inset 2px rgba(0,0,0,0.05);">
+                    <div id="overall-progress-fill" style="height: 100%; background: linear-gradient(90deg, #4ade80, #3b82f6); width: 0%; transition: width 1s;"></div>
+                </div>
+            </div>
+        </div>
+
+        <h3 style="margin-bottom: 20px;">Course Modules</h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            {% if chapters and chapters.length > 0 %}
+                {% for chapter in chapters %}
+                <div style="background: var(--white); padding: 30px; border-radius: 20px; border: 2px solid #eaeaea; display: flex; justify-content: space-between; align-items: center;">
+                    
+                    <div style="flex: 1; margin-right: 40px;">
+                        <span style="font-weight: bold; color: var(--mint-green); font-size: 0.9rem;">CHAPTER {{ loop.index }}</span>
+                        <h3 style="font-size: 1.3rem; margin-top: 5px; margin-bottom: 10px;">{{ chapter.title }}</h3>
+                        
+                        <div style="display: flex; gap: 15px; margin-top: 20px;">
+                            <a href="{{ chapter.slides_url }}" target="_blank" class="btn-secondary" style="text-decoration: none;">📄 Read Slides</a>
+                            <a href="/quiz/{{ chapter.id }}" class="btn-primary" style="text-decoration: none;">📝 Take Quiz</a>
+                        </div>
+                    </div>
+                    
+                    <div style="width: 150px; text-align: right;">
+                        <div style="margin-bottom: 10px;">
+                            <span style="font-size: 0.9rem; font-weight: bold;">Score: </span>
+                            <span class="chapter-percent" data-progress="{{ chapter.progress | default('0') }}">{{ chapter.progress | default('0') }}%</span>
+                        </div>
+                        <div class="progress-bar-bg">
+                            <div class="progress-fill fill-mint" style="width: {{ chapter.progress | default('0') }}%;"></div>
+                        </div>
+                    </div>
+
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="text-align: center; padding: 40px; border: 2px dashed #eaeaea; border-radius: 20px;">
+                    <p style="color: var(--text-muted);">Modules and slides are currently being uploaded by the instructor.</p>
+                </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const chapterPercentages = document.querySelectorAll('.chapter-percent');
+            let total = 0;
+            
+            if (chapterPercentages.length > 0) {
+                chapterPercentages.forEach(span => {
+                    total += parseInt(span.getAttribute('data-progress')) || 0;
+                });
+                
+                const average = Math.round(total / chapterPercentages.length);
+                
+                setTimeout(() => {
+                    document.getElementById('overall-progress-fill').style.width = average + '%';
+                    document.getElementById('overall-percentage-text').innerText = average + '%';
+                }, 300);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -18,6 +18,7 @@
         
         <ul class="nav-links">
             <li><a href="/spaces">Spaces</a></li>
+            <li><a href="/courses">Courses</a></li>
             <li><a href="/bookstore">Bookshelf</a></li>
         </ul>
 
@@ -42,7 +43,7 @@
         <p>Toss the boring portals.<br>Connect with classmates, crush your exams, buy required books, and actually enjoy learning again.</p>
         <br>
         <div class="hero-buttons">
-            <button onclick="window.location.href='/spaces'" class="btn-primary btn-large">Explore Classes 🚀</button>
+            <button onclick="window.location.href='/spaces'" class="btn-primary btn-large">Explore Spaces 🚀</button>
             <button onclick="window.location.href='/bookstore'" class="btn-secondary">⭐ See what's hot</button>
         </div>
 
@@ -77,21 +78,21 @@
             <a href="/spaces" class="feature-card card-yellow">
                 <div class="card-icon">📖</div>
                 <div class="card-image-wrapper">
-                    <img src="/images/course.jpg" alt="Course Hub" class="card-img">
+                    <img src="/images/course.jpg" alt="Video Hub" class="card-img">
                 </div>
                 <div class="card-content">
-                    <h3>Course Hub</h3>
-                    <p>All your lectures, notes, and interactive quizzes organized perfectly.</p>
+                    <h3>Video Spaces</h3>
+                    <p>All your videos, notes, and interactive quizzes organized perfectly.</p>
                 </div>
             </a>
 
             <a href="/spaces" class="feature-card card-pink">
                 <div class="card-icon">👥</div>
                 <div class="card-image-wrapper">
-                    <img src="/images/student.jpg" alt="Spaces" class="card-img">
+                    <img src="/images/student.jpg" alt="Community" class="card-img">
                 </div>
                 <div class="card-content">
-                    <h3>Spaces</h3>
+                    <h3>Community</h3>
                     <p>Ask questions and collaborate in real-time.</p>
                 </div>
             </a>
@@ -112,26 +113,51 @@
 
     {% else %}
         
-<section class="course-tracker" id="dashboard" style="margin-top: 60px;">
+    <section class="course-tracker" id="dashboard" style="margin-top: 60px;">
         
         <div style="text-align: center; margin-bottom: 50px;">
             <h1 style="font-size: 2.5rem; font-family: 'Poppins', sans-serif;">Welcome back to {{ university | default('Campus') }}! 🎓</h1>
             <p style="color: var(--text-muted); font-size: 1.1rem; margin-top: 10px;">{{ semester_status }}</p>
         </div>
 
-        <div class="tracker-header" style="margin-top: 20px;">
-            <h2>Your Enrolled Classes ✨</h2>
-            <a href="/spaces" class="see-all">Find more lectures →</a>
+        <div class="tracker-header">
+            <h2>Your Recent Videos 🎥</h2>
+            <a href="/spaces" class="see-all">Find more videos →</a>
         </div>
 
         <div class="tracker-cards">
-            {% if courses and courses.length > 0 %}
-                {% for course in courses %}
-                
-                {% set colors = ['mint', 'yellow', 'pink'] %}
-                {% set themeColor = colors[loop.index0 % 3] %}
+            {% if recent_videos and recent_videos.length > 0 %}
+                {% for video in recent_videos %}
+                <div class="course-card border-{{ loop.cycle('mint', 'yellow', 'pink') }}">
+                    <div class="tracker-img-box" style="background-image: url('{{ video.thumbnail_url }}'); background-size: cover; background-position: center;">
+                        <span class="category-tag">{{ video.category }}</span>
+                    </div>
+                    <div class="course-info">
+                        <h3>{{ video.title }}</h3>
+                        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                            <button onclick="window.location.href='/video/{{ video.id }}'" class="btn-secondary btn-full">▶ Resume Video</button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div style="padding: 40px; text-align: center; width: 100%; border: 2px dashed #eaeaea; border-radius: 20px;">
+                    <h3>No videos watched yet! 🎥</h3>
+                    <p style="color: var(--text-muted); margin-top: 10px;">Start watching videos in Spaces.</p>
+                    <button onclick="window.location.href='/spaces'" class="btn-primary" style="margin-top: 15px;">Browse Spaces</button>
+                </div>
+            {% endif %}
+        </div>
 
-                <div class="course-card border-{{ themeColor }}">
+        <div class="tracker-header" style="margin-top: 60px;">
+            <h2>Your Active Courses 🚀</h2>
+            <a href="#" class="see-all">Find more courses →</a>
+        </div>
+
+        <div class="tracker-cards">
+            {% if active_courses and active_courses.length > 0 %}
+                {% for course in active_courses %}
+                <div class="course-card border-{{ loop.cycle('mint', 'yellow', 'pink') }}">
                     <div class="tracker-img-box" style="background-image: url('{{ course.thumbnail_url }}'); background-size: cover; background-position: center;">
                         <span class="category-tag">{{ course.category }}</span>
                     </div>
@@ -140,23 +166,25 @@
                         
                         <div class="progress-container" style="margin-top: 10px;">
                             <div class="progress-text-row">
-                                <span>Progress</span>
+                                <span>Overall Progress</span>
                                 <span>{{ course.progress_percentage | default('0') }}%</span>
                             </div>
                             <div class="progress-bar-bg">
-                                <div class="progress-fill fill-{{ themeColor }}" style="width: {{ course.progress_percentage | default('0') }}%;"></div>
+                                <div class="progress-fill fill-{{ loop.cycle('mint', 'yellow', 'pink') }}" style="width: {{ course.progress_percentage | default('0') }}%;"></div>
                             </div>
                         </div>
                         
-                        <button onclick="window.location.href='/video/{{ course.id }}'" class="btn-primary btn-full" style="margin-top: 15px;">▶ Resume Lecture</button>
+                        <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
+                            <button onclick="window.location.href='/pages/course-modules.html'" class="btn-primary btn-full">📚 Go to Modules</button>
+                        </div>
                     </div>
                 </div>
                 {% endfor %}
             {% else %}
                 <div style="padding: 40px; text-align: center; width: 100%; border: 2px dashed #eaeaea; border-radius: 20px;">
-                    <h3>No classes yet! 🎥</h3>
-                    <p style="color: var(--text-muted); margin-bottom: 20px;">Start watching videos in the Spaces tab to track your progress here.</p>
-                    <button onclick="window.location.href='/spaces'" class="btn-primary">Browse Spaces</button>
+                    <h3>No active courses yet! 📚</h3>
+                    <p style="color: var(--text-muted); margin-top: 10px;">Jump into any course from the catalog to start tracking your progress here.</p>
+                    <button onclick="window.location.href='/courses'" class="btn-primary" style="margin-top: 15px;">Browse Courses</button>
                 </div>
             {% endif %}
         </div>
@@ -166,7 +194,7 @@
             <a href="/bookstore" class="see-all">Shop for more →</a>
         </div>
 
-<div class="book-grid">
+        <div class="book-grid">
             {% if purchased_books and purchased_books.length > 0 %}
                 {% for book in purchased_books %}
                 <div class="book-card" style="border: 2px solid #eaeaea;">
@@ -324,7 +352,6 @@
                 });
             }
 
-            // Sync the total display dynamically 
             let drawerTotal = 0;
             try {
                 {% if cart_items and cart_items.length > 0 %}
@@ -339,7 +366,6 @@
             if (totalDisplay) totalDisplay.textContent = 'RM ' + drawerTotal.toFixed(2);
         });
 
-        // Async remove function synced from the course-template page
         async function removeFromCart(cartItemId) {
             try {
                 const response = await fetch('/api/cart/remove', {

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyBuddies | Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Poppins:wght@700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/" class="logo">
+            <span class="logo-icon">✨</span>
+            <span class="logo-text">StudyBuddies</span>
+        </a>
+        <div class="nav-actions">
+            <button onclick="window.location.href='/pages/learning-path.html'" class="btn-secondary">Leave Quiz</button>
+        </div>
+    </nav>
+
+    <div style="max-width: 800px; margin: 40px auto; padding: 0 40px;">
+        
+        <div class="quiz-card" id="quiz-container">
+            <h2 style="margin-bottom: 5px;">{{ chapter.title | default('Chapter Quiz') }}</h2>
+            <span class="quiz-progress-text" id="question-tracker">Question 1 of 5</span>
+
+            <h3 id="question-text" style="font-size: 1.4rem; margin-bottom: 30px; line-height: 1.5;">Loading question...</h3>
+
+            <div id="options-container">
+                </div>
+
+            <div style="display: flex; justify-content: flex-end; margin-top: 30px;">
+                <button id="next-btn" class="btn-primary" disabled style="opacity: 0.5;">Next Question →</button>
+            </div>
+        </div>
+
+        <div class="quiz-card" id="results-container" style="display: none; text-align: center; padding: 60px 40px;">
+            <div style="font-size: 4rem; margin-bottom: 20px;">🏆</div>
+            <h2 style="font-size: 2rem; margin-bottom: 10px;">Quiz Completed!</h2>
+            <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 30px;">You scored <strong id="score-text" style="color: var(--text-dark); font-size: 1.5rem;">0%</strong></p>
+            
+            <form action="/api/quiz/submit" method="POST">
+                <input type="hidden" name="chapter_id" value="{{ chapter.id }}">
+                <input type="hidden" name="score" id="final-score-input" value="0">
+                <button type="submit" class="btn-primary btn-large btn-full">Save Score & Return 🚀</button>
+            </form>
+        </div>
+
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            
+            // 1. The Backend will inject the database questions into this variable.
+            // If the backend isn't connected yet, it uses this dummy data so you can test the UI!
+            const rawQuizData = `{{ questions_json | safe }}`;
+            let questions = [];
+
+            try {
+                // Tries to read the real database JSON
+                questions = JSON.parse(rawQuizData);
+            } catch (e) {
+                // Fallback dummy questions so the frontend works right now
+                questions = [
+                    { text: "What does HTML stand for?", options: ["Hyper Text Preprocessor", "Hyper Text Markup Language", "Hyper Tool Multi Language"], answer: "Hyper Text Markup Language" },
+                    { text: "What is the correct CSS syntax to change the background color?", options: ["body {color: black;}", "body:color=black;", "body {background-color: black;}"], answer: "body {background-color: black;}" },
+                    { text: "Which property is used to change the left margin of an element?", options: ["padding-left", "margin-left", "indent"], answer: "margin-left" }
+                ];
+            }
+
+            // Game Variables
+            let currentQuestionIndex = 0;
+            let correctAnswers = 0;
+            let selectedAnswer = null;
+
+            // HTML Elements
+            const questionText = document.getElementById('question-text');
+            const optionsContainer = document.getElementById('options-container');
+            const nextBtn = document.getElementById('next-btn');
+            const trackerText = document.getElementById('question-tracker');
+            
+            const quizContainer = document.getElementById('quiz-container');
+            const resultsContainer = document.getElementById('results-container');
+            const scoreText = document.getElementById('score-text');
+            const finalScoreInput = document.getElementById('final-score-input');
+
+            // Load a Question
+            function loadQuestion() {
+                const currentQ = questions[currentQuestionIndex];
+                questionText.innerText = currentQ.text;
+                trackerText.innerText = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
+                
+                // Clear old options
+                optionsContainer.innerHTML = '';
+                selectedAnswer = null;
+                nextBtn.disabled = true;
+                nextBtn.style.opacity = '0.5';
+
+                // Create new option buttons
+                currentQ.options.forEach(option => {
+                    const btn = document.createElement('button');
+                    btn.className = 'quiz-option';
+                    btn.innerText = option;
+                    
+                    btn.onclick = () => {
+                        // Remove highlight from all buttons
+                        document.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('selected'));
+                        // Highlight this button
+                        btn.classList.add('selected');
+                        selectedAnswer = option;
+                        // Enable the Next button
+                        nextBtn.disabled = false;
+                        nextBtn.style.opacity = '1';
+                    };
+                    
+                    optionsContainer.appendChild(btn);
+                });
+            }
+
+            // Handle Next Button Click
+            nextBtn.onclick = () => {
+                const currentQ = questions[currentQuestionIndex];
+                
+                // Check if they got it right
+                if (selectedAnswer === currentQ.answer) {
+                    correctAnswers++;
+                }
+
+                currentQuestionIndex++;
+
+                // Are we done?
+                if (currentQuestionIndex >= questions.length) {
+                    showResults();
+                } else {
+                    loadQuestion();
+                }
+            };
+
+            // Show Final Score
+            function showResults() {
+                quizContainer.style.display = 'none';
+                resultsContainer.style.display = 'block';
+
+                // Calculate percentage
+                const percentage = Math.round((correctAnswers / questions.length) * 100);
+                scoreText.innerText = `${percentage}%`;
+                
+                // Inject score into the hidden form so the backend can save it
+                finalScoreInput.value = percentage;
+            }
+
+            // Start the quiz!
+            if (questions.length > 0) {
+                loadQuestion();
+            } else {
+                questionText.innerText = "No questions found for this quiz.";
+                nextBtn.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

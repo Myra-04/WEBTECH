@@ -1521,3 +1521,121 @@ h1, h2, h3, .logo-text {
     0% { transform: scale(0); }
     100% { transform: scale(1); }
 }
+
+/* --- 17. LEARNING PATH & QUIZ PROGRESS --- */
+.learning-header {
+    background: var(--white);
+    padding: 40px;
+    border-radius: 20px;
+    border: 2px solid #eaeaea;
+    margin-bottom: 40px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+}
+
+.overall-progress-wrapper {
+    margin-top: 20px;
+}
+
+.progress-bar-large {
+    background: var(--bg-color);
+    height: 24px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: inset 2px rgba(0,0,0,0.05);
+}
+
+.progress-fill-large {
+    height: 100%;
+    background: linear-gradient(90deg, #4ade80, #3b82f6); /* Cool gradient! */
+    border-radius: 12px;
+    transition: width 1s ease-in-out;
+}
+
+.chapter-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.chapter-card {
+    background: var(--white);
+    padding: 30px;
+    border-radius: 20px;
+    border: 2px solid #eaeaea;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.2s;
+}
+
+.chapter-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--mint-green);
+}
+
+.chapter-info {
+    flex: 1;
+    margin-right: 40px;
+}
+
+.chapter-progress-box {
+    width: 200px;
+    text-align: right;
+}
+
+/* Mobile responsiveness for chapters */
+@media (max-width: 768px) {
+    .chapter-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 20px;
+    }
+    .chapter-progress-box {
+        width: 100%;
+        text-align: left;
+    }
+}
+
+/* --- 18. QUIZ INTERFACE --- */
+.quiz-card {
+    background: var(--white);
+    padding: 40px;
+    border-radius: 20px;
+    border: 2px solid #eaeaea;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+}
+
+.quiz-option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 18px 20px;
+    margin-bottom: 15px;
+    border: 2px solid #eaeaea;
+    border-radius: 15px;
+    background: var(--white);
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+
+.quiz-option:hover {
+    border-color: var(--mint-green);
+    background: #f0fdf4;
+}
+
+.quiz-option.selected {
+    border-color: var(--mint-green);
+    background: #dcfce7;
+    font-weight: bold;
+    transform: scale(1.01);
+}
+
+.quiz-progress-text {
+    font-weight: bold;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    margin-bottom: 20px;
+    display: inline-block;
+}
