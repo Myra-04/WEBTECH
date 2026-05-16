@@ -129,11 +129,15 @@ app.get('/', async (req, res) => {
     });
 });
 
-// --- NEW ROUTE: COURSE CATALOG ---
+// --- ROUTE: COURSE CATALOG ---
 app.get('/courses', async (req, res) => {
     const userId = req.session.userId;
+    
+    // THE GUARD 
+    if (!userId) return res.redirect('/login');
+
     const { data: allCourses } = await supabase.from('courses').select('*');
-    console.log("====== COURSES ROUTE SUCCESSFULLY CALLED! ======");
+    console.log("====== COURSES ROUTE SUCCESSFULLY CALLED!  ======");
     
     res.render('courses', { 
         all_courses: allCourses || [],
@@ -145,6 +149,10 @@ app.get('/courses', async (req, res) => {
 // --- UPDATED ROUTE: SPECIFIC COURSE MODULES ---
 app.get('/modules/:courseId', async (req, res) => {
     const userId = req.session.userId;
+
+    //THE GUARD 
+    if (!userId) return res.redirect('/login');
+
     const courseId = req.params.courseId;
 
     // 1. Fetch the main course details
@@ -221,6 +229,7 @@ app.post('/api/quiz/submit', async (req, res) => {
 // --- NEW ROUTE: VIDEO SPACES GRID ---
 app.get('/spaces', async (req, res) => {
     const userId = req.session.userId;
+    if (!userId) return res.redirect('/login');
     const { data: videos } = await supabase.from('videos').select('*');
     
     // Auto-generate the thumbnail images for the grid!
@@ -302,7 +311,9 @@ function getYouTubeId(url) {
 
 // --- BOOKSTORE (SEARCH & CURRENCY) ---
 app.get('/bookstore', async (req, res) => {
-    const userId = req.session.userId;
+    const userId = req.session.userId;          
+    if (!userId) return res.redirect('/login'); 
+
     const { data: allBooks } = await supabase.from('books').select('*');
     res.render('bookstore', { 
         books: allBooks || [], 
