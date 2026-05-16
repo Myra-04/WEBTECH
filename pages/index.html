@@ -128,12 +128,24 @@
         <div class="tracker-cards">
             {% if recent_videos and recent_videos.length > 0 %}
                 {% for video in recent_videos %}
-                <div class="course-card border-{{ loop.cycle('mint', 'yellow', 'pink') }}">
+                {% set theme_color = ['mint', 'yellow', 'pink'][loop.index0 % 3] %}
+                <div class="course-card border-{{ theme_color }}">
                     <div class="tracker-img-box" style="background-image: url('{{ video.thumbnail_url }}'); background-size: cover; background-position: center;">
                         <span class="category-tag">{{ video.category }}</span>
                     </div>
                     <div class="course-info">
                         <h3>{{ video.title }}</h3>
+                        
+                        <div class="progress-container" style="margin-top: 10px;">
+                            <div class="progress-text-row" style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px;">
+                                <span>Watch Progress</span>
+                                <span>{{ video.progress_percentage | default('0') }}%</span>
+                            </div>
+                            <div class="progress-bar-bg" style="background: var(--bg-color); height: 8px; border-radius: 4px; overflow: hidden; border: inset 1px rgba(0,0,0,0.05);">
+                                <div class="progress-fill fill-{{ theme_color }}" style="width: {{ video.progress_percentage | default('0') }}%; height: 100%;"></div>
+                            </div>
+                        </div>
+
                         <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
                             <button onclick="window.location.href='/video/{{ video.id }}'" class="btn-secondary btn-full">▶ Resume Video</button>
                         </div>
@@ -151,13 +163,14 @@
 
         <div class="tracker-header" style="margin-top: 60px;">
             <h2>Your Active Courses 🚀</h2>
-            <a href="#" class="see-all">Find more courses →</a>
+            <a href="/courses" class="see-all">Find more courses →</a>
         </div>
 
         <div class="tracker-cards">
             {% if active_courses and active_courses.length > 0 %}
                 {% for course in active_courses %}
-                <div class="course-card border-{{ loop.cycle('mint', 'yellow', 'pink') }}">
+                {% set theme_color = ['mint', 'yellow', 'pink'][loop.index0 % 3] %}
+                <div class="course-card border-{{ theme_color }}">
                     <div class="tracker-img-box" style="background-image: url('{{ course.thumbnail_url }}'); background-size: cover; background-position: center;">
                         <span class="category-tag">{{ course.category }}</span>
                     </div>
@@ -165,17 +178,17 @@
                         <h3>{{ course.title }}</h3>
                         
                         <div class="progress-container" style="margin-top: 10px;">
-                            <div class="progress-text-row">
-                                <span>Overall Progress</span>
+                            <div class="progress-text-row" style="display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px;">
+                                <span>Quiz Completion Progress</span>
                                 <span>{{ course.progress_percentage | default('0') }}%</span>
                             </div>
-                            <div class="progress-bar-bg">
-                                <div class="progress-fill fill-{{ loop.cycle('mint', 'yellow', 'pink') }}" style="width: {{ course.progress_percentage | default('0') }}%;"></div>
+                            <div class="progress-bar-bg" style="background: var(--bg-color); height: 8px; border-radius: 4px; overflow: hidden; border: inset 1px rgba(0,0,0,0.05);">
+                                <div class="progress-fill fill-{{ theme_color }}" style="width: {{ course.progress_percentage | default('0') }}%; height: 100%;"></div>
                             </div>
                         </div>
                         
                         <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 15px;">
-                            <button onclick="window.location.href='/pages/course-modules.html'" class="btn-primary btn-full">📚 Go to Modules</button>
+                            <button onclick="window.location.href='/modules/{{ course.id }}'" class="btn-primary btn-full">📚 Go to Modules</button>
                         </div>
                     </div>
                 </div>
@@ -205,7 +218,7 @@
                         <span class="category-tag" style="position: static; display: inline-block; margin-bottom: 10px; border: 1px solid #eaeaea;">{{ book.books.course_code }}</span>
                         <h3 class="book-title" style="margin-bottom: 5px;">{{ book.books.title }}</h3>
                         <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">By {{ book.books.author }}</p>  
-                        <button onclick="window.location.href='{{ book.books.pdf_url }}'" class="btn-secondary btn-full">Read eBook 📖</button>
+                        <a href="{{ book.books.pdf_url }}" target="_blank" class="btn-secondary btn-full" style="display: block; text-align: center; text-decoration: none; padding: 10px; box-sizing: border-box;">Read eBook 📖</a>
                     </div>
                 </div>
                 {% endfor %}

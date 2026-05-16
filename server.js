@@ -3,7 +3,7 @@ const session = require('express-session');
 const nunjucks = require('nunjucks');
 const path = require('path');
 const { createClient } = require('@supabase/supabase-js');
-const multer = require('multer'); // ADDED: Required for handling file uploads
+const multer = require('multer'); 
 
 const app = express();
 
@@ -19,10 +19,8 @@ app.use(session({
     saveUninitialized: true
 }));
 
-// ADDED: Setup Multer to store the uploaded file in memory temporarily
 const upload = multer({ storage: multer.memoryStorage() });
 
-// This tells Nunjucks to look in both the main folder AND the 'pages' folder
 nunjucks.configure([__dirname, path.join(__dirname, 'pages')], { autoescape: true, express: app });
 app.set('view engine', 'html');
 
@@ -31,7 +29,6 @@ const supabaseUrl = 'https://usnhssmiytegieslaweq.supabase.co';
 const supabaseKey = 'sb_publishable_Br9p9Kau2ObdnLnAC4Ku_w_3MAczbI5';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// --- HELPER: Get Cart Count ---
 async function getCartCount(userId) {
     if (!userId) return 0;
     const { count } = await supabase
@@ -41,7 +38,6 @@ async function getCartCount(userId) {
     return count || 0;
 }
 
-// --- HELPER: Get Cart Items with Book Details ---
 async function getCartItems(userId) {
     if (!userId) return null;
     const { data } = await supabase
@@ -58,6 +54,7 @@ app.get('/', async (req, res) => {
     
     let semesterStatus = "🌴 Semester Break! Relax and recharge.";
     let userPurchasedBooks = []; 
+    let recentVideos = []; 
     let activeCourses = []; 
     
     let userUniversity = "Guest";
@@ -65,7 +62,6 @@ app.get('/', async (req, res) => {
     let userEmail = "";
 
     if (isLoggedIn) {
-        // Get user profile
         const { data: profile } = await supabase.from('profiles').select('*').eq('id', userId).single();
         
         if (profile) {
@@ -83,7 +79,6 @@ app.get('/', async (req, res) => {
             semesterStatus = "🔥 February Semester is live!";
         }
 
-        // 1. Fetch the user's permanent digital bookshelf
         const { data: pBooks } = await supabase
             .from('purchased_books')
             .select('*, books(*)')
@@ -91,19 +86,13 @@ app.get('/', async (req, res) => {
             
         if (pBooks) userPurchasedBooks = pBooks;
 
-        // 2. Fetch the user's watched videos
-        const { data: progressData, error: progressError } = await supabase
+        const { data: progressData } = await supabase
             .from('video_progress')
             .select('*, videos(*)')
             .eq('user_id', userId);
             
-        if (progressError) {
-            console.error("🚨 Error fetching progress:", progressError.message);
-        }
-
-        // 3. Format the videos so the HTML can easily read them
         if (progressData) {
-            activeCourses = progressData.map(p => {
+            recentVideos = progressData.map(p => {
                 const ytId = getYouTubeId(p.videos?.video_url);
                 return {
                     id: p.video_id,
@@ -114,6 +103,41 @@ app.get('/', async (req, res) => {
                 };
             });
         }
+
+        const { data: scoresData } = await supabase
+            .from('quiz_scores')
+            .select('chapter_id, score')
+            .eq('user_id', userId);
+            
+        if (scoresData && scoresData.length > 0) {
+            const chapterIds = scoresData.map(s => s.chapter_id);
+            const { data: chapters } = await supabase.from('course_chapters').select('course_id, courses(*)').in('id', chapterIds);
+
+            if (chapters) {
+                const courseMap = new Map();
+                chapters.forEach(ch => {
+                    if (ch.courses && !courseMap.has(ch.courses.id)) {
+                        const courseChapters = chapters.filter(c => c.course_id === ch.courses.id);
+                        let totalScore = 0;
+                        let count = 0;
+                        courseChapters.forEach(cc => {
+                            const s = scoresData.find(score => score.chapter_id === cc.id);
+                            if (s) { totalScore += s.score; count++; }
+                        });
+                        const avgProgress = count > 0 ? Math.round(totalScore / count) : 0;
+
+                        courseMap.set(ch.courses.id, {
+                            id: ch.courses.id,
+                            title: ch.courses.title,
+                            category: ch.courses.category,
+                            thumbnail_url: ch.courses.thumbnail_url || '/images/placeholder.jpg',
+                            progress_percentage: avgProgress
+                        });
+                    }
+                });
+                activeCourses = Array.from(courseMap.values());
+            }
+        }
     }
     
     res.render('index', { 
@@ -122,22 +146,19 @@ app.get('/', async (req, res) => {
         is_logged_in: isLoggedIn, 
         semester_status: semesterStatus,
         purchased_books: userPurchasedBooks, 
-        courses: activeCourses,
+        recent_videos: recentVideos,
+        active_courses: activeCourses,
         university: userUniversity,
         user_name: userName,        
         user_email: userEmail       
     });
 });
 
-// --- ROUTE: COURSE CATALOG ---
 app.get('/courses', async (req, res) => {
     const userId = req.session.userId;
-    
-    // THE GUARD 
     if (!userId) return res.redirect('/login');
 
     const { data: allCourses } = await supabase.from('courses').select('*');
-    console.log("====== COURSES ROUTE SUCCESSFULLY CALLED!  ======");
     
     res.render('courses', { 
         all_courses: allCourses || [],
@@ -146,29 +167,18 @@ app.get('/courses', async (req, res) => {
     });
 });
 
-// --- UPDATED ROUTE: SPECIFIC COURSE MODULES ---
 app.get('/modules/:courseId', async (req, res) => {
     const userId = req.session.userId;
-
-    //THE GUARD 
     if (!userId) return res.redirect('/login');
 
     const courseId = req.params.courseId;
-
-    // 1. Fetch the main course details
     const { data: course } = await supabase.from('courses').select('*').eq('id', courseId).single();
-    
-    // 2. Fetch the chapters for this course
     const { data: chapters } = await supabase.from('course_chapters').select('*').eq('course_id', courseId).order('chapter_number', { ascending: true });
 
-    // 3. Find the student's quiz scores and merge them into the chapters (For the frontend progress bar)
     if (userId && chapters) {
         const { data: scores } = await supabase.from('quiz_scores').select('chapter_id, score').eq('user_id', userId);
-        
         chapters.forEach(chapter => {
-            // Check if the student has a score for this specific chapter
             const chapterScore = scores?.find(s => s.chapter_id === chapter.id);
-            // Inject the score as 'progress' so the HTML template can read it
             chapter.progress = chapterScore ? chapterScore.score : 0; 
         });
     }
@@ -181,17 +191,12 @@ app.get('/modules/:courseId', async (req, res) => {
     });
 });
 
-// --- NEW ROUTE: INTERACTIVE QUIZ ENGINE ---
 app.get('/quiz/:chapterId', async (req, res) => {
     const userId = req.session.userId;
-    if (!userId) return res.redirect('/login'); // Secure the quiz!
+    if (!userId) return res.redirect('/login');
 
     const chapterId = req.params.chapterId;
-
-    // Fetch questions from Supabase
     const { data: questions } = await supabase.from('quiz_questions').select('*').eq('chapter_id', chapterId);
-
-    // Convert to JSON string for the frontend to use in JavaScript
     const questionsJson = JSON.stringify(questions || []);
 
     res.render('quiz', {
@@ -202,25 +207,14 @@ app.get('/quiz/:chapterId', async (req, res) => {
     });
 });
 
-// --- NEW API: SUBMIT QUIZ SCORE ---
 app.post('/api/quiz/submit', async (req, res) => {
-    // 🔍 LET'S BE DETECTIVES: Print exactly what quiz.html is sending
-    console.log("🔍 DATA FROM QUIZ.HTML:", req.body); 
-    
     const userId = req.session.userId;
     if (!userId) return res.status(401).send("Unauthorized");
-
     
-    const rawChapterId = req.body.chapter_id;
-    const rawCourseId = req.body.course_id;
-    const rawScore = req.body.score;
+    const finalChapterId = parseInt(req.body.chapter_id) || 0;
+    const finalScore = parseInt(req.body.score) || 0;
+    const finalCourseId = req.body.course_id || 1; 
 
-    //  FORCE THEM TO BE NUMBERS (If empty, fallback to 0 or 1 so it doesn't crash)
-    const finalChapterId = parseInt(rawChapterId) || 0;
-    const finalScore = parseInt(rawScore) || 0;
-    const finalCourseId = rawCourseId || 1; 
-
-    // Send to Supabase using our clean, verified numbers
     const { error } = await supabase.from('quiz_scores').upsert({
         user_id: userId,
         chapter_id: finalChapterId,
@@ -233,17 +227,14 @@ app.post('/api/quiz/submit', async (req, res) => {
         return res.status(500).send("Error saving score");
     }
 
-    // Success! Redirect the user back to the modules page
     res.redirect(`/modules/${finalCourseId}`); 
 });
 
-// --- NEW ROUTE: VIDEO SPACES GRID ---
 app.get('/spaces', async (req, res) => {
     const userId = req.session.userId;
     if (!userId) return res.redirect('/login');
     const { data: videos } = await supabase.from('videos').select('*');
     
-    // Auto-generate the thumbnail images for the grid!
     if (videos && videos.length > 0) {
         videos.forEach(video => {
             const ytId = getYouTubeId(video.video_url);
@@ -261,7 +252,6 @@ app.get('/spaces', async (req, res) => {
     });
 });
 
-// --- NEW ROUTE: DYNAMIC VIDEO PLAYER, Q&A, AND NOTES ---
 app.get('/video/:id', async (req, res) => {
     const userId = req.session.userId;
     const videoId = req.params.id;
@@ -275,11 +265,19 @@ app.get('/video/:id', async (req, res) => {
         }
     }
 
-    const { data: comments } = await supabase
+    const { data: allComments } = await supabase
         .from('comments')
         .select('*, profiles(full_name)') 
         .eq('video_id', videoId)
         .order('created_at', { ascending: true });
+
+    let threadedComments = [];
+    if (allComments) {
+        threadedComments = allComments.filter(c => !c.parent_id);
+        threadedComments.forEach(parent => {
+            parent.replies = allComments.filter(c => c.parent_id === parent.id);
+        });
+    }
 
     const { data: notes } = await supabase
         .from('notes')
@@ -287,7 +285,6 @@ app.get('/video/:id', async (req, res) => {
         .eq('video_id', videoId)
         .order('created_at', { ascending: false });
 
-    // NEW FIX: Check if the user has watched this before and grab their percentage!
     let savedProgress = 0;
     if (userId) {
         const { data: progressData } = await supabase
@@ -304,12 +301,12 @@ app.get('/video/:id', async (req, res) => {
 
     res.render('course-template', { 
         video: video,
-        comments: comments || [],
+        comments: threadedComments || [], 
         notes: notes || [],
         cart_count: await getCartCount(userId),
         cart_items: await getCartItems(userId),
         is_logged_in: !!userId,
-        saved_progress: savedProgress // 👈 Hand the percentage over to the HTML
+        saved_progress: savedProgress
     });
 });
 
@@ -320,7 +317,6 @@ function getYouTubeId(url) {
     return (match && match[2].length === 11) ? match[2] : null;
 }
 
-// --- BOOKSTORE (SEARCH & CURRENCY) ---
 app.get('/bookstore', async (req, res) => {
     const userId = req.session.userId;          
     if (!userId) return res.redirect('/login'); 
@@ -338,7 +334,6 @@ app.get('/search', async (req, res) => {
     const userId = req.session.userId;
     const searchQuery = req.query.query || '';
     
-    // FULL SEARCH: Checks Title, Author, and Course Code!
     const { data: searchResults, error } = await supabase
         .from('books')
         .select('*')
@@ -362,7 +357,6 @@ app.get('/search', async (req, res) => {
     });
 });
 
-// --- CART APIs (ADD & REMOVE) ---
 app.post('/api/cart/add', async (req, res) => {
     const userId = req.session.userId;
     if (!userId) return res.status(401).json({ success: false, message: "Please log in first" });
@@ -390,7 +384,6 @@ app.post('/api/cart/remove', async (req, res) => {
     res.json({ success: true });
 });
 
-// --- CHECKOUT PAGE ROUTE ---
 app.get('/checkout', async (req, res) => {
     const userId = req.session.userId;
     if (!userId) return res.redirect('/login');
@@ -419,7 +412,6 @@ app.get('/checkout', async (req, res) => {
     });
 });
 
-// --- CHECKOUT PROCESSING API (WITH EXTREME DEBUGGING) ---
 app.post('/api/checkout', async (req, res) => {
     const userId = req.session.userId;
     const { location, phone, total_amount } = req.body;
@@ -427,16 +419,11 @@ app.post('/api/checkout', async (req, res) => {
     if (!userId) return res.status(401).json({ success: false, message: "Not logged in" });
 
     try {
-        console.log("-----------------------------------------");
-        console.log("🛒 Checkout started for user:", userId);
-
         const cartItems = await getCartItems(userId);
         if (!cartItems || cartItems.length === 0) {
-            console.log("❌ Checkout failed: Cart is empty.");
             return res.status(400).json({ success: false, message: "Cart is empty" });
         }
 
-        console.log("📦 1. Attempting to create Order in 'orders' table...");
         const { data: orderData, error: orderError } = await supabase
             .from('orders')
             .insert([{ 
@@ -449,12 +436,8 @@ app.post('/api/checkout', async (req, res) => {
             .select() 
             .single();
 
-        if (orderError) {
-            console.log("🚨 ERROR IN 'orders' TABLE:", orderError.message);
-            return res.status(500).json({ success: false, message: "Failed to create order." });
-        }
+        if (orderError) throw orderError;
 
-        console.log("🧾 2. Attempting to save items to 'order_items' table...");
         const orderItemsToInsert = cartItems.map(item => ({
             order_id: orderData.id,
             book_id: item.book_id,
@@ -462,56 +445,42 @@ app.post('/api/checkout', async (req, res) => {
         }));
         const { error: itemsError } = await supabase.from('order_items').insert(orderItemsToInsert);
 
-        if (itemsError) {
-            console.log("🚨 ERROR IN 'order_items' TABLE:", itemsError.message);
-            return res.status(500).json({ success: false, message: "Failed to save items." });
-        }
+        if (itemsError) throw itemsError;
 
-        console.log("📚 3. Attempting to add books to 'purchased_books' table...");
         const purchasedBooksToInsert = cartItems.map(item => ({
             user_id: userId,
             book_id: item.book_id
         }));
         const { error: pbError } = await supabase.from('purchased_books').insert(purchasedBooksToInsert);
 
-        if (pbError) {
-            console.log("🚨 ERROR IN 'purchased_books' TABLE:", pbError.message);
-            return res.status(500).json({ success: false, message: "Failed to add to digital shelf." });
-        }
+        if (pbError) throw pbError;
 
-        console.log("🗑️ 4. Attempting to clear the cart...");
-        const { error: clearError } = await supabase.from('cart_items').delete().eq('user_id', userId);
+        await supabase.from('cart_items').delete().eq('user_id', userId);
 
-        if (clearError) {
-            console.log("🚨 ERROR CLEARING CART:", clearError.message);
-        }
-
-        console.log("✅ CHECKOUT 100% COMPLETE!");
-        console.log("-----------------------------------------");
         res.json({ success: true, message: "Order placed! Books added to your digital bookshelf." });
 
     } catch (err) {
-        console.log("🚨 CRITICAL SERVER CRASH:", err);
         res.status(500).json({ success: false, message: "Server error" });
     }
 });
 
-// --- NEW API: ADD A COMMENT ---
 app.post('/api/comments/add', async (req, res) => {
     const userId = req.session.userId;
-    const { video_id, comment_text } = req.body;
+    const { video_id, comment_text, parent_id } = req.body;
 
     if (!userId) return res.redirect('/login');
 
-    const { error } = await supabase.from('comments').insert([
-        { video_id: video_id, user_id: userId, comment_text: comment_text }
-    ]);
+    const insertData = { video_id: video_id, user_id: userId, comment_text: comment_text };
+    if (parent_id) {
+        insertData.parent_id = parent_id;
+    }
+
+    const { error } = await supabase.from('comments').insert([insertData]);
 
     if (error) console.error("🚨 Comment Error:", error.message);
     res.redirect(`/video/${video_id}`);
 });
 
-// --- NEW API: UPLOAD NOTES TO SUPABASE STORAGE ---
 app.post('/api/notes/upload', upload.single('note_file'), async (req, res) => {
     const userId = req.session.userId;
     const videoId = req.body.video_id;
@@ -548,25 +517,13 @@ app.post('/api/notes/upload', upload.single('note_file'), async (req, res) => {
     }
 });
 
-// --- NEW API: SAVE VIDEO PROGRESS (WITH EXTREME DEBUGGING) ---
 app.post('/api/video/progress', async (req, res) => {
-    console.log("-----------------------------------------");
-    console.log("📡 Progress Signal Received from HTML!");
-    
     const userId = req.session.userId;
     const { video_id, progress } = req.body;
 
-    console.log("User ID:", userId);
-    console.log("Video ID:", video_id);
-    console.log("Progress:", progress + "%");
-
-    if (!userId) {
-        console.log("❌ Failed: The server thinks you are not logged in.");
-        return res.status(401).json({ success: false });
-    }
+    if (!userId) return res.status(401).json({ success: false });
 
     try {
-        // Check if the user already started this video
         const { data: existing, error: fetchError } = await supabase
             .from('video_progress')
             .select('*')
@@ -574,31 +531,18 @@ app.post('/api/video/progress', async (req, res) => {
             .eq('video_id', video_id)
             .single();
 
-        // Error code PGRST116 just means "0 rows found", which is normal for the first time!
-        if (fetchError && fetchError.code !== 'PGRST116') {
-            console.log("🚨 DATABASE FETCH ERROR:", fetchError.message);
-        }
-
         if (existing) {
-            console.log("🔄 Found existing record! Updating...");
-            const { error: updateError } = await supabase.from('video_progress').update({ progress: progress }).eq('id', existing.id);
-            if (updateError) console.log("🚨 DATABASE UPDATE ERROR:", updateError.message);
+            await supabase.from('video_progress').update({ progress: progress }).eq('id', existing.id);
         } else {
-            console.log("🆕 First time watching! Inserting new record...");
-            const { error: insertError } = await supabase.from('video_progress').insert([{ user_id: userId, video_id: video_id, progress: progress }]);
-            if (insertError) console.log("🚨 DATABASE INSERT ERROR:", insertError.message);
+            await supabase.from('video_progress').insert([{ user_id: userId, video_id: video_id, progress: progress }]);
         }
 
-        console.log("✅ Checkpoint Saved!");
-        console.log("-----------------------------------------");
         res.json({ success: true });
     } catch (err) {
-        console.log("🚨 CRITICAL SERVER ERROR:", err.message);
         res.status(500).json({ success: false });
     }
 });
 
-// --- AUTHENTICATION (STUDENT PORTAL & SMART ROUTING) ---
 app.get('/login', async (req, res) => {
     const userId = req.session.userId;
     if (userId) return res.redirect('/#dashboard'); 
@@ -660,4 +604,7 @@ app.get('/logout', (req, res) => {
     res.redirect('/');
 });
 
-app.listen(3000, () => console.log('🚀 Server running on http://localhost:3000'));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+});
