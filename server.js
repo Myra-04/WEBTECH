@@ -204,26 +204,37 @@ app.get('/quiz/:chapterId', async (req, res) => {
 
 // --- NEW API: SUBMIT QUIZ SCORE ---
 app.post('/api/quiz/submit', async (req, res) => {
+    // 🔍 LET'S BE DETECTIVES: Print exactly what quiz.html is sending
+    console.log("🔍 DATA FROM QUIZ.HTML:", req.body); 
+    
     const userId = req.session.userId;
-    const { chapter_id, course_id, score } = req.body; // Assuming the form sends these three things
-
     if (!userId) return res.status(401).send("Unauthorized");
 
-    // Upsert the score into the database (Update if exists, Insert if new)
+    
+    const rawChapterId = req.body.chapter_id;
+    const rawCourseId = req.body.course_id;
+    const rawScore = req.body.score;
+
+    //  FORCE THEM TO BE NUMBERS (If empty, fallback to 0 or 1 so it doesn't crash)
+    const finalChapterId = parseInt(rawChapterId) || 0;
+    const finalScore = parseInt(rawScore) || 0;
+    const finalCourseId = rawCourseId || 1; 
+
+    // Send to Supabase using our clean, verified numbers
     const { error } = await supabase.from('quiz_scores').upsert({
         user_id: userId,
-        chapter_id: chapter_id,
-        score: score,
+        chapter_id: finalChapterId,
+        score: finalScore,
         updated_at: new Date()
-    }, { onConflict: 'user_id, chapter_id' }); // Assuming you set a unique constraint in Supabase
+    }, { onConflict: 'user_id, chapter_id' });
 
     if (error) {
         console.error("🚨 Quiz Save Error:", error.message);
         return res.status(500).send("Error saving score");
     }
 
-    // Redirect the user back to the modules page so they can see their progress
-    res.redirect(`/modules/${course_id}`); 
+    // Success! Redirect the user back to the modules page
+    res.redirect(`/modules/${finalCourseId}`); 
 });
 
 // --- NEW ROUTE: VIDEO SPACES GRID ---

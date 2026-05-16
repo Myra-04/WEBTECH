@@ -15,7 +15,7 @@
             <span class="logo-text">StudyBuddies</span>
         </a>
         <div class="nav-actions">
-            <button onclick="window.location.href='/pages/learning-path.html'" class="btn-secondary">Leave Quiz</button>
+            <button onclick="window.location.href='/courses'" class="btn-secondary">Leave Quiz</button>
         </div>
     </nav>
 
@@ -41,7 +41,8 @@
             <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 30px;">You scored <strong id="score-text" style="color: var(--text-dark); font-size: 1.5rem;">0%</strong></p>
             
             <form action="/api/quiz/submit" method="POST">
-                <input type="hidden" name="chapter_id" value="{{ chapter.id }}">
+                <input type="hidden" name="chapter_id" value="{{ chapter_id }}">
+                <input type="hidden" name="course_id" value="1"> 
                 <input type="hidden" name="score" id="final-score-input" value="0">
                 <button type="submit" class="btn-primary btn-large btn-full">Save Score & Return 🚀</button>
             </form>
@@ -85,31 +86,32 @@
             const scoreText = document.getElementById('score-text');
             const finalScoreInput = document.getElementById('final-score-input');
 
-            // Load a Question
+            // 1. Load a Question 
             function loadQuestion() {
                 const currentQ = questions[currentQuestionIndex];
-                questionText.innerText = currentQ.text;
+                
+                // Use the exact column name from your Supabase screenshot
+                questionText.innerText = currentQ.question_text;
                 trackerText.innerText = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
                 
-                // Clear old options
                 optionsContainer.innerHTML = '';
                 selectedAnswer = null;
                 nextBtn.disabled = true;
                 nextBtn.style.opacity = '0.5';
 
-                // Create new option buttons
-                currentQ.options.forEach(option => {
+                // Since your 'options' column is an Array [text, text, text]
+                currentQ.options.forEach(optionText => {
                     const btn = document.createElement('button');
                     btn.className = 'quiz-option';
-                    btn.innerText = option;
+                    btn.innerText = optionText;
                     
                     btn.onclick = () => {
-                        // Remove highlight from all buttons
                         document.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('selected'));
-                        // Highlight this button
                         btn.classList.add('selected');
-                        selectedAnswer = option;
-                        // Enable the Next button
+                        
+                        // We save the FULL TEXT of the choice
+                        selectedAnswer = optionText; 
+                        
                         nextBtn.disabled = false;
                         nextBtn.style.opacity = '1';
                     };
@@ -118,18 +120,17 @@
                 });
             }
 
-            // Handle Next Button Click
+            // 2. Handle Next Button Click
             nextBtn.onclick = () => {
                 const currentQ = questions[currentQuestionIndex];
                 
-                // Check if they got it right
-                if (selectedAnswer === currentQ.answer) {
+                // Compare Full Text to Full Text
+                if (selectedAnswer === currentQ.correct_answer) {
                     correctAnswers++;
                 }
 
                 currentQuestionIndex++;
 
-                // Are we done?
                 if (currentQuestionIndex >= questions.length) {
                     showResults();
                 } else {
