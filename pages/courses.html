@@ -38,8 +38,7 @@
                         <h3 class="book-title" style="margin-bottom: 5px;">{{ course.title }}</h3>
                         <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">{{ course.short_description }}</p>
                         
-                        <button onclick="window.location.href='/pages/course-modules.html'" class="btn-primary btn-full">Start Learning</button>
-                    </div>
+                       <button onclick="window.location.href='/modules/{{ course.id }}'" class="btn-primary btn-full">Start Learning</button> 
                 </div>
                 {% endfor %}
             {% else %}
