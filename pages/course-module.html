@@ -23,7 +23,7 @@
         
         <div style="background: var(--white); padding: 40px; border-radius: 20px; border: 2px solid #eaeaea; margin-bottom: 40px;">
             <span class="category-tag" style="border: 1px solid #eaeaea; margin-bottom: 10px; display: inline-block;">{{ course.category | default('Computer Science') }}</span>
-            <h1 style="font-size: 2rem; margin-bottom: 5px;">{{ course.title | default('Web Technology 101') }}</h1>
+            <h1 style="font-size: 2rem; margin-bottom: 5px;">{{ course.title | default('Course Title') }}</h1>
             <p style="color: var(--text-muted); margin-bottom: 25px;">{{ course.description | default('Complete the slides and quizzes below to finish this course.') }}</p>
             
             <div class="overall-progress-wrapper">
@@ -42,15 +42,27 @@
         <div style="display: flex; flex-direction: column; gap: 20px;">
             {% if chapters and chapters.length > 0 %}
                 {% for chapter in chapters %}
-                <div style="background: var(--white); padding: 30px; border-radius: 20px; border: 2px solid #eaeaea; display: flex; justify-content: space-between; align-items: center;">
+                <div class="module-card" style="background: var(--white); padding: 30px; border-radius: 20px; border: 2px solid #eaeaea; display: flex; justify-content: space-between; align-items: center;">
                     
                     <div style="flex: 1; margin-right: 40px;">
                         <span style="font-weight: bold; color: var(--mint-green); font-size: 0.9rem;">CHAPTER {{ loop.index }}</span>
                         <h3 style="font-size: 1.3rem; margin-top: 5px; margin-bottom: 10px;">{{ chapter.title }}</h3>
                         
                         <div style="display: flex; gap: 15px; margin-top: 20px;">
-                            <a href="{{ chapter.slides_url }}" target="_blank" class="btn-secondary" style="text-decoration: none;">📄 Read Slides</a>
-                            <a href="/quiz/{{ chapter.id }}" class="btn-primary" style="text-decoration: none;">📝 Take Quiz</a>
+                            
+                            <a href="{{ chapter.slides_url }}" target="_blank" onclick="handleSlideClick(event, '{{ chapter.id }}', this)" class="btn-secondary" style="text-decoration: none;">📄 Read Slides</a>
+                            
+                            {% if chapter.tutorial_url %}
+                                <a href="{{ chapter.tutorial_url }}" target="_blank" onclick="handleTutorialClick(event, '{{ chapter.id }}', this)" class="btn-secondary tutorial-btn" data-locked="{% if chapter.progress < 33 %}true{% else %}false{% endif %}" style="text-decoration: none; transition: all 0.3s; {% if chapter.progress < 33 %}opacity: 0.5; cursor: not-allowed;{% endif %}">💻 Watch Tutorial</a>
+                            {% endif %}
+
+                            {% set quiz_req = 33 %}
+                            {% if chapter.tutorial_url %}
+                                {% set quiz_req = 66 %}
+                            {% endif %}
+                            
+                            <a href="/quiz/{{ chapter.id }}" onclick="handleQuizClick(event, this)" class="btn-primary quiz-btn" data-locked="{% if chapter.progress < quiz_req %}true{% else %}false{% endif %}" style="text-decoration: none; transition: all 0.3s; {% if chapter.progress < quiz_req %}opacity: 0.5; cursor: not-allowed; background: #95a5a6; border-color: #95a5a6;{% endif %}">📝 Take Quiz</a>
+                        
                         </div>
                     </div>
                     
@@ -60,7 +72,7 @@
                             <span class="chapter-percent" data-progress="{{ chapter.progress | default('0') }}">{{ chapter.progress | default('0') }}%</span>
                         </div>
                         <div class="progress-bar-bg">
-                            <div class="progress-fill fill-mint" style="width: {{ chapter.progress | default('0') }}%;"></div>
+                            <div class="progress-fill fill-mint" style="width: {{ chapter.progress | default('0') }}%; transition: width 0.5s ease;"></div>
                         </div>
                     </div>
 
@@ -77,6 +89,10 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
+            recalculateOverall();
+        });
+
+        function recalculateOverall() {
             const chapterPercentages = document.querySelectorAll('.chapter-percent');
             let total = 0;
             
@@ -90,9 +106,87 @@
                 setTimeout(() => {
                     document.getElementById('overall-progress-fill').style.width = average + '%';
                     document.getElementById('overall-percentage-text').innerText = average + '%';
-                }, 300);
+                }, 100);
             }
-        });
+        }
+
+        async function updateDatabaseAndUI(chapterId, targetProgress, moduleCard) {
+            const progressBar = moduleCard.querySelector('.progress-fill');
+            const progressText = moduleCard.querySelector('.chapter-percent');
+            const currentProgress = parseInt(progressText.getAttribute('data-progress')) || 0;
+
+            if (targetProgress > currentProgress) {
+                progressBar.style.width = targetProgress + '%';
+                progressText.innerText = targetProgress + '%';
+                progressText.setAttribute('data-progress', targetProgress);
+                
+                recalculateOverall();
+
+                try {
+                    await fetch('/api/chapter/progress', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ chapter_id: chapterId, progress: targetProgress })
+                    });
+                } catch(err) {
+                    console.error('Background tracking failed:', err);
+                }
+            }
+        }
+
+        async function handleSlideClick(event, chapterId, btnElement) {
+            const moduleCard = btnElement.closest('.module-card');
+            
+            // Instantly update progress to 33
+            await updateDatabaseAndUI(chapterId, 33, moduleCard);
+            
+            // Find the next buttons in this specific card
+            const tutorialBtn = moduleCard.querySelector('.tutorial-btn');
+            const quizBtn = moduleCard.querySelector('.quiz-btn');
+
+            // Unlock the Tutorial if it exists, otherwise unlock the Quiz
+            if (tutorialBtn) {
+                tutorialBtn.setAttribute('data-locked', 'false');
+                tutorialBtn.style.opacity = '1';
+                tutorialBtn.style.cursor = 'pointer';
+            } else if (quizBtn) {
+                quizBtn.setAttribute('data-locked', 'false');
+                quizBtn.style.opacity = '1';
+                quizBtn.style.cursor = 'pointer';
+                quizBtn.style.background = ''; 
+                quizBtn.style.borderColor = '';
+            }
+        }
+
+        async function handleTutorialClick(event, chapterId, btnElement) {
+            if (btnElement.getAttribute('data-locked') === 'true') {
+                event.preventDefault(); 
+                alert('🔒 Please read the slides first to unlock this tutorial!');
+                return;
+            }
+            
+            const moduleCard = btnElement.closest('.module-card');
+            
+            // Instantly update progress to 66
+            await updateDatabaseAndUI(chapterId, 66, moduleCard);
+            
+            // Unlock the Quiz button
+            const quizBtn = moduleCard.querySelector('.quiz-btn');
+            if (quizBtn) {
+                quizBtn.setAttribute('data-locked', 'false');
+                quizBtn.style.opacity = '1';
+                quizBtn.style.cursor = 'pointer';
+                quizBtn.style.background = ''; 
+                quizBtn.style.borderColor = '';
+            }
+        }
+
+        function handleQuizClick(event, btnElement) {
+            if (btnElement.getAttribute('data-locked') === 'true') {
+                event.preventDefault();
+                alert('🔒 Please complete the previous materials to unlock this quiz!');
+            }
+        }
     </script>
 </body>
 </html>

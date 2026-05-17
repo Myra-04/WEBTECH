@@ -20,4 +20,9 @@ GET /quiz/:chapterId: Fetch quiz questions for that chapter, convert them to a J
 
 POST /api/quiz/submit: Catch the submitted form (chapter_id and score), save the score to the database to update the user's progress, and redirect them back to the modules page.
 
+3.Backend notes
+- i update it we cant unlock the tutorial if havent open slides 
+- the quiz will be lock again if not achieve 100% so user need to click tutorial once again to be able to try quiz again
+
+
 ASK ME IF GOT ANY QUESTIONS/NEEDS REGARDING FRONT END THANKS

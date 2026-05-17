@@ -207,7 +207,6 @@ app.get('/quiz/:chapterId', async (req, res) => {
 
     const chapterId = req.params.chapterId;
     
-   
     const { data: questions } = await supabase.from('quiz_questions').select('*').eq('chapter_id', chapterId);
     const questionsJson = JSON.stringify(questions || []);
     const { data: chapterData } = await supabase.from('course_chapters').select('course_id').eq('id', chapterId).single(); 
@@ -215,7 +214,7 @@ app.get('/quiz/:chapterId', async (req, res) => {
 
     res.render('quiz', {
         chapter_id: chapterId,
-        course_id: currentCourseId, // 3. SEKARANG KITA HANTAR COURSE_ID KE HTML
+        course_id: currentCourseId, 
         questions_json: questionsJson,
         cart_count: await getCartCount(userId),
         is_logged_in: !!userId
@@ -530,6 +529,30 @@ app.post('/api/notes/upload', upload.single('note_file'), async (req, res) => {
         console.error("Upload Error:", error.message);
         res.status(500).send("Failed to upload note.");
     }
+});
+
+// --- NEW API: TRACK BUTTON CLICKS (SLIDES & TUTORIALS) ---
+app.post('/api/chapter/progress', async (req, res) => {
+    const userId = req.session.userId;
+    if (!userId) return res.status(401).json({ success: false });
+
+    const { chapter_id, progress } = req.body;
+
+    // Fetch current score to make sure we don't lower it!
+    const { data: existing } = await supabase.from('quiz_scores').select('score').eq('user_id', userId).eq('chapter_id', chapter_id).single();
+    const currentScore = existing ? existing.score : 0;
+
+    // Only update if the new progress is higher than their current progress
+    if (progress > currentScore) {
+        await supabase.from('quiz_scores').upsert({
+            user_id: userId,
+            chapter_id: chapter_id,
+            score: progress,
+            updated_at: new Date()
+        }, { onConflict: 'user_id, chapter_id' });
+    }
+
+    res.json({ success: true });
 });
 
 app.post('/api/video/progress', async (req, res) => {
