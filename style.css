@@ -734,8 +734,9 @@ h1, h2, h3, .logo-text {
 /* --- 10. BOOKSTORE SECTION --- */
 .store-container {
     max-width: 1200px;
-    margin: 40px auto;
-    padding: 0 40px;
+    margin: 40px auto; 
+    padding: 0 20px;
+    width: 100%;
 }
 
 .store-header {
@@ -778,10 +779,10 @@ h1, h2, h3, .logo-text {
 /* Book Grid */
 .book-grid {
     display: grid;
-    /* Forces exactly 3 columns */
-    grid-template-columns: repeat(3, 1fr); 
+    /* Baris 'repeat' ni yang penting untuk susun kad sebelah-sebelah! */
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 30px;
-    align-items: start;
+    margin-top: 30px;
 }
 
 /* Mobile Responsiveness so the 3x3 grid doesn't squash on small screens */

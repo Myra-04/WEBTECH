@@ -28,7 +28,7 @@
         </div>
 
         <div class="book-grid">
-            {% if all_courses and all_courses.length > 0 %}
+           {% if all_courses and all_courses.length > 0 %}
                 {% for course in all_courses %}
                 <div class="book-card" style="border: 2px solid #eaeaea;">
                     <div class="book-image-wrapper" style="background-image: url('{{ course.thumbnail_url }}'); background-size: cover; background-position: center;">
@@ -39,8 +39,8 @@
                         <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">{{ course.short_description }}</p>
                         
                        <button onclick="window.location.href='/modules/{{ course.id }}'" class="btn-primary btn-full">Start Learning</button> 
-                </div>
-                {% endfor %}
+                    </div> 
+                </div> {% endfor %}
             {% else %}
                 <div style="grid-column: 1 / -1; text-align: center; padding: 60px; border: 2px dashed #eaeaea; border-radius: 20px;">
                     <h3>No courses available yet!</h3>
