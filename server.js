@@ -111,30 +111,42 @@ app.get('/', async (req, res) => {
             
         if (scoresData && scoresData.length > 0) {
             const chapterIds = scoresData.map(s => s.chapter_id);
-            const { data: chapters } = await supabase.from('course_chapters').select('course_id, courses(*)').in('id', chapterIds);
+            const { data: scoredChapters } = await supabase.from('course_chapters').select('course_id, courses(*)').in('id', chapterIds);
 
-            if (chapters) {
+            if (scoredChapters) {
                 const courseMap = new Map();
-                chapters.forEach(ch => {
-                    if (ch.courses && !courseMap.has(ch.courses.id)) {
-                        const courseChapters = chapters.filter(c => c.course_id === ch.courses.id);
-                        let totalScore = 0;
-                        let count = 0;
-                        courseChapters.forEach(cc => {
-                            const s = scoresData.find(score => score.chapter_id === cc.id);
-                            if (s) { totalScore += s.score; count++; }
-                        });
-                        const avgProgress = count > 0 ? Math.round(totalScore / count) : 0;
+                const uniqueCourseIds = [...new Set(scoredChapters.map(ch => ch.course_id))];
 
-                        courseMap.set(ch.courses.id, {
-                            id: ch.courses.id,
-                            title: ch.courses.title,
-                            category: ch.courses.category,
-                            thumbnail_url: ch.courses.thumbnail_url || '/images/placeholder.jpg',
+                for (const courseId of uniqueCourseIds) {
+                    const { data: allCourseChapters } = await supabase.from('course_chapters').select('*').eq('course_id', courseId);
+                    const chapterWithCourseDetail = scoredChapters.find(ch => ch.course_id === courseId);
+                    
+                    if (chapterWithCourseDetail && chapterWithCourseDetail.courses) {
+                        const courseDetails = chapterWithCourseDetail.courses;
+                        let totalScore = 0;
+                        let totalChaptersCount = allCourseChapters ? allCourseChapters.length : 1; 
+
+                        if (allCourseChapters) {
+                            allCourseChapters.forEach(cc => {
+                                const s = scoresData.find(score => score.chapter_id === cc.id);
+                                if (s) { 
+                                    totalScore += s.score; 
+                                }
+                            });
+                        }
+
+                        const avgProgress = Math.round(totalScore / totalChaptersCount);
+
+                        courseMap.set(courseId, {
+                            id: courseId,
+                            title: courseDetails.title,
+                            category: courseDetails.category,
+                            thumbnail_url: courseDetails.thumbnail_url || '/images/placeholder.jpg',
                             progress_percentage: avgProgress
                         });
                     }
-                });
+                }
+                
                 activeCourses = Array.from(courseMap.values());
             }
         }
@@ -156,8 +168,6 @@ app.get('/', async (req, res) => {
 
 app.get('/courses', async (req, res) => {
     const userId = req.session.userId;
-    if (!userId) return res.redirect('/login');
-
     const { data: allCourses } = await supabase.from('courses').select('*');
     
     res.render('courses', { 
@@ -196,11 +206,16 @@ app.get('/quiz/:chapterId', async (req, res) => {
     if (!userId) return res.redirect('/login');
 
     const chapterId = req.params.chapterId;
+    
+   
     const { data: questions } = await supabase.from('quiz_questions').select('*').eq('chapter_id', chapterId);
     const questionsJson = JSON.stringify(questions || []);
+    const { data: chapterData } = await supabase.from('course_chapters').select('course_id').eq('id', chapterId).single(); 
+    const currentCourseId = chapterData ? chapterData.course_id : 1; 
 
     res.render('quiz', {
         chapter_id: chapterId,
+        course_id: currentCourseId, // 3. SEKARANG KITA HANTAR COURSE_ID KE HTML
         questions_json: questionsJson,
         cart_count: await getCartCount(userId),
         is_logged_in: !!userId

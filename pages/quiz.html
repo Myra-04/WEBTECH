@@ -42,7 +42,7 @@
             
             <form action="/api/quiz/submit" method="POST">
                 <input type="hidden" name="chapter_id" value="{{ chapter_id }}">
-                <input type="hidden" name="course_id" value="1"> 
+                <input type="hidden" name="course_id" value="{{ course_id }}">
                 <input type="hidden" name="score" id="final-score-input" value="0">
                 <button type="submit" class="btn-primary btn-large btn-full">Save Score & Return 🚀</button>
             </form>
@@ -53,22 +53,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             
-            // 1. The Backend will inject the database questions into this variable.
-            // If the backend isn't connected yet, it uses this dummy data so you can test the UI!
-            const rawQuizData = `{{ questions_json | safe }}`;
-            let questions = [];
-
-            try {
-                // Tries to read the real database JSON
-                questions = JSON.parse(rawQuizData);
-            } catch (e) {
-                // Fallback dummy questions so the frontend works right now
-                questions = [
-                    { text: "What does HTML stand for?", options: ["Hyper Text Preprocessor", "Hyper Text Markup Language", "Hyper Tool Multi Language"], answer: "Hyper Text Markup Language" },
-                    { text: "What is the correct CSS syntax to change the background color?", options: ["body {color: black;}", "body:color=black;", "body {background-color: black;}"], answer: "body {background-color: black;}" },
-                    { text: "Which property is used to change the left margin of an element?", options: ["padding-left", "margin-left", "indent"], answer: "margin-left" }
-                ];
-            }
+            let questions = {{ questions_json | safe }};
 
             // Game Variables
             let currentQuestionIndex = 0;
@@ -90,8 +75,8 @@
             function loadQuestion() {
                 const currentQ = questions[currentQuestionIndex];
                 
-                // Use the exact column name from your Supabase screenshot
-                questionText.innerText = currentQ.question_text;
+                // Escape HTML supaya tag <br> atau <html> dalam soalan tak merosakkan website
+                questionText.textContent = currentQ.question_text;
                 trackerText.innerText = `Question ${currentQuestionIndex + 1} of ${questions.length}`;
                 
                 optionsContainer.innerHTML = '';
@@ -99,27 +84,42 @@
                 nextBtn.disabled = true;
                 nextBtn.style.opacity = '0.5';
 
-                // Since your 'options' column is an Array [text, text, text]
-                currentQ.options.forEach(optionText => {
-                    const btn = document.createElement('button');
-                    btn.className = 'quiz-option';
-                    btn.innerText = optionText;
-                    
-                    btn.onclick = () => {
-                        document.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('selected'));
-                        btn.classList.add('selected');
-                        
-                        // We save the FULL TEXT of the choice
-                        selectedAnswer = optionText; 
-                        
-                        nextBtn.disabled = false;
-                        nextBtn.style.opacity = '1';
-                    };
-                    
-                    optionsContainer.appendChild(btn);
-                });
-            }
+                let optionsArray = currentQ.options;
+                if (typeof optionsArray === 'string') {
+                    try { 
+                        // Kalau tersimpan sebagai string dalam DB, kita tukar jadi Array balik
+                        optionsArray = JSON.parse(optionsArray); 
+                    } catch (e) { 
+                        console.error("Format options salah untuk soalan:", currentQ.question_text);
+                        optionsArray = []; 
+                    }
+                }
 
+                // Render 
+                if (Array.isArray(optionsArray)) {
+                    optionsArray.forEach(optionText => {
+                        const btn = document.createElement('button');
+                        btn.className = 'quiz-option';
+                        btn.textContent = optionText; 
+                        
+                        btn.onclick = () => {
+                            document.querySelectorAll('.quiz-option').forEach(b => b.classList.remove('selected'));
+                            btn.classList.add('selected');
+                            
+                            selectedAnswer = optionText; 
+                            nextBtn.disabled = false;
+                            nextBtn.style.opacity = '1';
+                        };
+                        
+                        optionsContainer.appendChild(btn);
+                    });
+                } else {
+                    optionsContainer.innerHTML = '<p style="color:red;">Error loading options. Sila beritahu admin.</p>';
+                    nextBtn.disabled = false;
+                    nextBtn.style.opacity = '1';
+                }
+            }
+                
             // 2. Handle Next Button Click
             nextBtn.onclick = () => {
                 const currentQ = questions[currentQuestionIndex];
