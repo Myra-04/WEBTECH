@@ -125,7 +125,7 @@
             <a href="/spaces" class="see-all">Find more videos →</a>
         </div>
 
-        <div class="tracker-cards">
+        <div class="book-grid">
             {% if recent_videos and recent_videos.length > 0 %}
                 {% for video in recent_videos %}
                 {% set theme_color = ['mint', 'yellow', 'pink'][loop.index0 % 3] %}
@@ -166,12 +166,14 @@
             <a href="/courses" class="see-all">Find more courses →</a>
         </div>
 
-        <div class="tracker-cards">
+        <div class="book-grid">
             {% if active_courses and active_courses.length > 0 %}
                 {% for course in active_courses %}
+                
                 {% set theme_color = ['mint', 'yellow', 'pink'][loop.index0 % 3] %}
-                <div class="course-card border-{{ theme_color }}">
-                    <div class="tracker-img-box" style="background-image: url('{{ course.thumbnail_url }}'); background-size: cover; background-position: center;">
+                
+                <div class="course-card border-{{ theme_color }}" style="min-width: 0;">
+                    <div class="tracker-img-box" style="background-image: url('{{ course.thumbnail_url }}'); background-size: cover; background-position: center; height: 180px;">
                         <span class="category-tag">{{ course.category }}</span>
                     </div>
                     <div class="course-info">
@@ -194,7 +196,7 @@
                 </div>
                 {% endfor %}
             {% else %}
-                <div style="padding: 40px; text-align: center; width: 100%; border: 2px dashed #eaeaea; border-radius: 20px;">
+                <div style="grid-column: 1 / -1; padding: 40px; text-align: center; width: 100%; border: 2px dashed #eaeaea; border-radius: 20px;">
                     <h3>No active courses yet! 📚</h3>
                     <p style="color: var(--text-muted); margin-top: 10px;">Jump into any course from the catalog to start tracking your progress here.</p>
                     <button onclick="window.location.href='/courses'" class="btn-primary" style="margin-top: 15px;">Browse Courses</button>
