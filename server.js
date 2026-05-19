@@ -221,27 +221,35 @@ app.get('/quiz/:chapterId', async (req, res) => {
     });
 });
 
+// --- UPDATED API: QUIZ SUBMISSION (100% CHECK) ---
 app.post('/api/quiz/submit', async (req, res) => {
     const userId = req.session.userId;
     if (!userId) return res.status(401).send("Unauthorized");
     
     const finalChapterId = parseInt(req.body.chapter_id) || 0;
-    const finalScore = parseInt(req.body.score) || 0;
+    const actualQuizScore = parseInt(req.body.score) || 0;
     const finalCourseId = req.body.course_id || 1; 
 
-    const { error } = await supabase.from('quiz_scores').upsert({
-        user_id: userId,
-        chapter_id: finalChapterId,
-        score: finalScore,
-        updated_at: new Date()
-    }, { onConflict: 'user_id, chapter_id' });
+    // THE FIX: Only save the score to the progress table IF it is exactly 100%
+    if (actualQuizScore === 100) {
+        const { error } = await supabase.from('quiz_scores').upsert({
+            user_id: userId,
+            chapter_id: finalChapterId,
+            score: 100, // Chapter is now 100% complete!
+            updated_at: new Date()
+        }, { onConflict: 'user_id, chapter_id' });
 
-    if (error) {
-        console.error("🚨 Quiz Save Error:", error.message);
-        return res.status(500).send("Error saving score");
+        if (error) {
+            console.error("🚨 Quiz Save Error:", error.message);
+            return res.status(500).send("Error saving score");
+        }
+        
+        // Success! Send them back with a 'passed' flag in the URL
+        res.redirect(`/modules/${finalCourseId}?quiz=passed`);
+    } else {
+        // They failed. Do NOT overwrite their 66% progress from the tutorial!
+        res.redirect(`/modules/${finalCourseId}?quiz=failed&score=${actualQuizScore}`);
     }
-
-    res.redirect(`/modules/${finalCourseId}`); 
 });
 
 app.get('/spaces', async (req, res) => {
@@ -531,7 +539,7 @@ app.post('/api/notes/upload', upload.single('note_file'), async (req, res) => {
     }
 });
 
-// --- NEW API: TRACK BUTTON CLICKS (SLIDES & TUTORIALS) ---
+// --- API: TRACK BUTTON CLICKS (SLIDES & TUTORIALS) ---
 app.post('/api/chapter/progress', async (req, res) => {
     const userId = req.session.userId;
     if (!userId) return res.status(401).json({ success: false });
