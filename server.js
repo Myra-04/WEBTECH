@@ -141,7 +141,8 @@ app.get('/', async (req, res) => {
                             id: courseId,
                             title: courseDetails.title,
                             category: courseDetails.category,
-                            thumbnail_url: courseDetails.thumbnail_url || '/images/placeholder.jpg',
+                            // THE FIX: Properly map the database image_url so the dashboard can display it!
+                            thumbnail_url: courseDetails.image_url || '/images/placeholder.jpg',
                             progress_percentage: avgProgress
                         });
                     }
@@ -221,7 +222,6 @@ app.get('/quiz/:chapterId', async (req, res) => {
     });
 });
 
-// --- UPDATED API: QUIZ SUBMISSION (100% CHECK) ---
 app.post('/api/quiz/submit', async (req, res) => {
     const userId = req.session.userId;
     if (!userId) return res.status(401).send("Unauthorized");
@@ -230,12 +230,11 @@ app.post('/api/quiz/submit', async (req, res) => {
     const actualQuizScore = parseInt(req.body.score) || 0;
     const finalCourseId = req.body.course_id || 1; 
 
-    // THE FIX: Only save the score to the progress table IF it is exactly 100%
     if (actualQuizScore === 100) {
         const { error } = await supabase.from('quiz_scores').upsert({
             user_id: userId,
             chapter_id: finalChapterId,
-            score: 100, // Chapter is now 100% complete!
+            score: 100, 
             updated_at: new Date()
         }, { onConflict: 'user_id, chapter_id' });
 
@@ -244,10 +243,8 @@ app.post('/api/quiz/submit', async (req, res) => {
             return res.status(500).send("Error saving score");
         }
         
-        // Success! Send them back with a 'passed' flag in the URL
         res.redirect(`/modules/${finalCourseId}?quiz=passed`);
     } else {
-        // They failed. Do NOT overwrite their 66% progress from the tutorial!
         res.redirect(`/modules/${finalCourseId}?quiz=failed&score=${actualQuizScore}`);
     }
 });
@@ -539,18 +536,15 @@ app.post('/api/notes/upload', upload.single('note_file'), async (req, res) => {
     }
 });
 
-// --- API: TRACK BUTTON CLICKS (SLIDES & TUTORIALS) ---
 app.post('/api/chapter/progress', async (req, res) => {
     const userId = req.session.userId;
     if (!userId) return res.status(401).json({ success: false });
 
     const { chapter_id, progress } = req.body;
 
-    // Fetch current score to make sure we don't lower it!
     const { data: existing } = await supabase.from('quiz_scores').select('score').eq('user_id', userId).eq('chapter_id', chapter_id).single();
     const currentScore = existing ? existing.score : 0;
 
-    // Only update if the new progress is higher than their current progress
     if (progress > currentScore) {
         await supabase.from('quiz_scores').upsert({
             user_id: userId,

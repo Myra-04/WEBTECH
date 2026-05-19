@@ -19,6 +19,9 @@
             <li><a href="/courses">Courses</a></li>
             <li><a href="/bookstore">Bookshelf</a></li>
         </ul>
+        <div class="nav-actions">
+            <button onclick="window.location.href='/'" class="btn-secondary">← Back to Dashboard</button>
+        </div>
     </nav>
 
     <div class="store-container">
@@ -30,17 +33,20 @@
         <div class="book-grid">
            {% if all_courses and all_courses.length > 0 %}
                 {% for course in all_courses %}
-                <div class="book-card" style="border: 2px solid #eaeaea;">
-                    <div class="book-image-wrapper" style="background-image: url('{{ course.thumbnail_url }}'); background-size: cover; background-position: center;">
+                <div class="book-card" style="border: 2px solid #eaeaea; overflow: hidden;">
+                    
+                    <div class="book-image-wrapper" style="background-image: url('{{ course.image_url | default('/images/placeholder.jpg') }}'); background-size: cover; background-position: center; height: 200px; width: 100%; border-bottom: 1px solid #eaeaea;">
                     </div>
+                    
                     <div class="book-details">
                         <span class="category-tag" style="position: static; display: inline-block; margin-bottom: 10px; border: 1px solid #eaeaea;">{{ course.category }}</span>
                         <h3 class="book-title" style="margin-bottom: 5px;">{{ course.title }}</h3>
-                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">{{ course.short_description }}</p>
+                        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">{{ course.short_description | default('Learn the fundamentals of this course.') }}</p>
                         
-                       <button onclick="window.location.href='/modules/{{ course.id }}'" class="btn-primary btn-full">Start Learning</button> 
+                        <button onclick="window.location.href='/modules/{{ course.id }}'" class="btn-primary btn-full">Start Learning</button> 
                     </div> 
-                </div> {% endfor %}
+                </div> 
+                {% endfor %}
             {% else %}
                 <div style="grid-column: 1 / -1; text-align: center; padding: 60px; border: 2px dashed #eaeaea; border-radius: 20px;">
                     <h3>No courses available yet!</h3>
