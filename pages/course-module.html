@@ -53,7 +53,7 @@
                             <a href="{{ chapter.slides_url }}" target="_blank" onclick="handleSlideClick(event, '{{ chapter.id }}', this)" class="btn-secondary" style="text-decoration: none;">📄 Read Slides</a>
                             
                             {% if chapter.tutorial_url %}
-                                <a href="{{ chapter.tutorial_url }}" target="_blank" onclick="handleTutorialClick(event, '{{ chapter.id }}', this)" class="btn-secondary tutorial-btn" data-locked="{% if chapter.progress < 33 %}true{% else %}false{% endif %}" style="text-decoration: none; transition: all 0.3s; {% if chapter.progress < 33 %}opacity: 0.5; cursor: not-allowed;{% endif %}">💻 Watch Tutorial</a>
+                                <a href="{{ chapter.tutorial_url }}" target="_blank" onclick="handleTutorialClick(event, '{{ chapter.id }}', this)" class="btn-secondary tutorial-btn" data-locked="{% if chapter.progress < 33 %}true{% else %}false{% endif %}" style="text-decoration: none; transition: all 0.3s; {% if chapter.progress < 33 %}opacity: 0.5; cursor: not-allowed;{% endif %}">💻 Do Tutorial</a>
                             {% endif %}
 
                             {% set quiz_req = 33 %}
